@@ -74,9 +74,13 @@ def load_spectrum_function(spec: str) -> Callable[[str, bool], None]:
 def energy_commands(emission: EmissionConfig) -> list[str]:
     """GPS energy distribution of the optical photons."""
     if emission.gaussian is not None:
-        with ureg.context("sp"):
-            mean = _quantity(emission.gaussian["mean"], "eV", "emission.gaussian.mean").to("eV")
-        sigma = _quantity(emission.gaussian["sigma"], "eV", "emission.gaussian.sigma").to("eV")
+        try:
+            with ureg.context("sp"):
+                mean = _quantity(emission.gaussian["mean"], "eV", "gaussian mean").to("eV")
+            sigma = _quantity(emission.gaussian["sigma"], "eV", "gaussian sigma").to("eV")
+        except pint.DimensionalityError as e:
+            msg = f"emission.gaussian: {e}"
+            raise ConfigError(msg) from e
         return [
             "/gps/ene/type     Gauss",
             f"/gps/ene/mono     {mean.m:.6g} eV",
