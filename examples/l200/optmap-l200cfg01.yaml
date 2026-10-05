@@ -1,0 +1,34 @@
+# LAr VUV scintillation optical map for the LEGEND-200 l200cfg01 configuration,
+# equivalent to the former workflow.sb, but on 4 nodes.
+
+name: l200cfg01-lar-vuv
+output_dir: optmap-l200cfg01
+
+geometry:
+  executable: legend-pygeom-l200
+  config: geom-config.yaml
+  metadata: legend-metadata
+
+emission:
+  # 128 nm LAr scintillation, as in the former macro
+  gaussian: { mean: 9.68 eV, sigma: 0.22 eV }
+  # or the measured LAr emission spectrum from pygeom-optics:
+  # spectrum: pygeomoptics.lar.g4gps_lar_emissions_spectrum
+
+statistics:
+  nodes: 4
+  runs_per_node: 5
+  primaries_per_process: 8_000_000
+
+optmap:
+  volume: liquid_argon
+  shape: cylinder
+  range_in_m: [[-2, 2], [-2, 2], [-3, 3]]
+  bins: [80, 80, 120]
+
+execution:
+  site: nersc
+  slurm:
+    node:
+      mail-type: TIME_LIMIT,FAIL
+      mail-user: someone@example.com
