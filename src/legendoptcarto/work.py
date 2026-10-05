@@ -40,12 +40,12 @@ def _available_cpus() -> int:
     return len(os.sched_getaffinity(0))
 
 
-def merge_maps(cfg: Config, inputs: list[Path], output: Path) -> None:
-    """Merge optical maps into `output`, written atomically."""
+def merge_maps(cfg: Config, inputs: list[Path], output: Path, workdir: Path) -> None:
+    """Merge optical maps into `output`, temporary files are written to `workdir`."""
     from reboost.optmap.create import merge_optical_maps  # noqa: PLC0415
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    tmp = output.with_name(f".{output.name}.part")
+    tmp = workdir / f".{output.name}.part"
     tmp.unlink(missing_ok=True)
     if len(inputs) == 1:
         shutil.copyfile(inputs[0], tmp)
@@ -56,7 +56,7 @@ def merge_maps(cfg: Config, inputs: list[Path], output: Path) -> None:
             cfg.optmap.reboost_settings(),
             n_procs=cfg.processing.merge_procs,
         )
-    tmp.replace(output)
+    shutil.move(tmp, output)
 
 
 def _create_map(cfg: Config, inputs: list[Path], output: Path) -> None:
@@ -163,7 +163,7 @@ def run_node(cfg: Config, index: int) -> None:
 
     output = cfg.node_map(index)
     with _step(f"merging intermediate maps into {output}"):
-        merge_maps(cfg, sorted(map_dir.glob("*.lh5"), key=_natural_key), output)
+        merge_maps(cfg, sorted(map_dir.glob("*.lh5"), key=_natural_key), output, scratch)
 
     shutil.rmtree(scratch)
     log.info(
@@ -190,7 +190,7 @@ def run_merge(cfg: Config) -> None:
         raise RuntimeError(msg)
 
     with _step(f"merging {len(found)} node maps into {cfg.final_map}"):
-        merge_maps(cfg, found, cfg.final_map)
+        merge_maps(cfg, found, cfg.final_map, cfg.final_map.parent)
 
 
 def work_cli(argv: list[str] | None = None) -> None:

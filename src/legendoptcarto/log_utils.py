@@ -11,5 +11,6 @@ def setup_log(verbosity: int = 0) -> None:
         level=logging.WARNING,
     )
     level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbosity, 2)]
-    for name in ("legendoptcarto", "reboost"):
-        logging.getLogger(name).setLevel(level)
+    logging.getLogger("legendoptcarto").setLevel(level)
+    # reboost is chatty, only show its info messages from -vv on
+    logging.getLogger("reboost").setLevel(logging.INFO if verbosity >= 2 else logging.WARNING)
