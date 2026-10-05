@@ -1,0 +1,12 @@
+# generic Slurm cluster. Start from this preset when porting to a new facility,
+# options under slurm.node and slurm.merge are passed verbatim to sbatch.
+scheduler: slurm
+slurm:
+  node:
+    nodes: 1
+    ntasks: 1
+    exclusive: true
+  merge:
+    nodes: 1
+    ntasks: 1
+    cpus-per-task: 8

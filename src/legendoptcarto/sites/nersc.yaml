@@ -1,0 +1,23 @@
+# NERSC Perlmutter CPU nodes, LEGEND allocation.
+scheduler: slurm
+scratch_dir: $PSCRATCH/legend-optcarto
+slurm:
+  node:
+    account: m2676
+    qos: regular
+    constraint: cpu
+    licenses: cfs,scratch
+    nodes: 1
+    ntasks: 1
+    ntasks-per-node: 1
+    cpus-per-task: 256
+    time: "04:00:00"
+  # merging maps needs a few cores only: use the shared QOS instead of a full node
+  merge:
+    account: m2676
+    qos: shared
+    constraint: cpu
+    licenses: cfs,scratch
+    ntasks: 1
+    cpus-per-task: 16
+    time: "01:00:00"

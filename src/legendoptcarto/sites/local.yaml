@@ -1,0 +1,3 @@
+# run all jobs one after the other on the current machine, in the foreground.
+# useful for testing and for small productions on a workstation.
+scheduler: local
