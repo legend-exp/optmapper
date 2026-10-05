@@ -22,6 +22,7 @@ def build_gdml(cfg: Config) -> None:
     The geometry configuration is stored next to the GDML file, for the record.
     """
     geom = cfg.geometry
+    assert geom.executable is not None
     if shutil.which(geom.executable) is None:
         msg = f"geometry generator '{geom.executable}' not found, is it installed?"
         raise ConfigError(msg)

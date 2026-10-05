@@ -87,6 +87,7 @@ def energy_commands(emission: EmissionConfig) -> list[str]:
             f"/gps/ene/sigma    {sigma.m:.6g} eV",
         ]
 
+    assert emission.spectrum is not None
     func = load_spectrum_function(emission.spectrum)
     with tempfile.TemporaryDirectory() as tmpdir:
         fn = Path(tmpdir) / "spectrum.mac"

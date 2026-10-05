@@ -282,7 +282,7 @@ class Config:
         try:
             return cls(
                 name=str(d["name"]),
-                output_dir=_resolve_path(d["output_dir"], base),
+                output_dir=str(_resolve_path(d["output_dir"], base)),
                 geometry=GeometryConfig.from_dict(d["geometry"], base),
                 emission=EmissionConfig.from_dict(d["emission"]),
                 optmap=OptmapConfig.from_dict(d["optmap"]),

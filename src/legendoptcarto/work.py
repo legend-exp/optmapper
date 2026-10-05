@@ -157,8 +157,8 @@ def run_node(cfg: Config, index: int) -> None:
             dest = Path(cfg.output_dir) / "stp" / f"node{index:04d}"
             with _step(f"run {run}: copying stp files to {dest}"):
                 dest.mkdir(parents=True, exist_ok=True)
-                for f in stp_files:
-                    shutil.copy2(f, dest)
+                for stp_file in stp_files:
+                    shutil.copy2(stp_file, dest)
         shutil.rmtree(stp_dir)
 
     output = cfg.node_map(index)

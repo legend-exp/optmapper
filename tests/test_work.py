@@ -19,7 +19,8 @@ def test_natural_key(tmp_path):
     ]
 
 
-def test_merge_with_failed_nodes(tmp_path, base_config, fake_bin, caplog):
+@pytest.mark.usefixtures("fake_bin")
+def test_merge_with_failed_nodes(tmp_path, base_config, caplog):
     base_config["statistics"]["nodes"] = 3
     cfg = Config.from_dict(base_config)
     out = tmp_path / "out"

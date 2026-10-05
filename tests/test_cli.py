@@ -96,8 +96,9 @@ def test_launcher(base_config, monkeypatch):
     assert resolve_launcher(cfg) == ["srun", "-n1"]
 
 
+@pytest.mark.usefixtures("fake_bin")
 @pytest.mark.parametrize("nodes", [1, 2])
-def test_local_production(tmp_path, base_config, fake_bin, nodes):
+def test_local_production(tmp_path, base_config, nodes):
     base_config["statistics"]["nodes"] = nodes
     base_config["processing"]["keep_stp"] = True
     optcarto_cli([_write(tmp_path, base_config)])

@@ -5,7 +5,7 @@ import pytest
 from legendoptcarto.config import Config, ConfigError, deep_merge, load_site
 
 
-def test_load_relative_paths(tmp_path, base_config):
+def test_load_relative_paths(tmp_path):
     cfg_file = tmp_path / "prod" / "config.yaml"
     cfg_file.parent.mkdir()
     cfg_file.write_text(
