@@ -88,6 +88,8 @@ def run_node(cfg: Config, index: int) -> None:
         cfg.execution.scratch_dir or str(Path(cfg.output_dir) / "scratch")
     )
     scratch = Path(scratch_base) / cfg.name / f"node{index:04d}-{job_id}"
+    # a requeued Slurm job keeps its ID, do not pick up files from the previous attempt
+    shutil.rmtree(scratch, ignore_errors=True)
     scratch.mkdir(parents=True)
     os.environ.setdefault("NUMBA_CACHE_DIR", str(scratch / ".numba-cache"))
 
