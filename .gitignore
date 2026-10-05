@@ -1,0 +1,20 @@
+/src/legendoptcarto/_version.py
+
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+
+# pixi environments
+.pixi/
+
+# local reference material
+/_reference/
+/prompt.txt
