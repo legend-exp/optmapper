@@ -43,6 +43,15 @@ Homepage = "https://github.com/legend-exp/optmapper"
 "Bug Tracker" = "https://github.com/legend-exp/optmapper/issues"
 
 [project.optional-dependencies]
+all = [
+    "optmapper[docs,test]",
+]
+docs = [
+    "furo",
+    "myst-parser",
+    "sphinx",
+    "sphinx-copybutton",
+]
 test = [
     "pre-commit",
     "pytest>=6.0",

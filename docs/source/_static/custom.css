@@ -1,0 +1,10 @@
+/* glossary terms: furo only sets a medium font weight */
+dl.glossary dt {
+  font-weight: 700;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+dl.glossary dd {
+  margin-bottom: 0.5rem;
+}
