@@ -6,8 +6,8 @@ import shlex
 import pytest
 from reboost.optmap.create import list_optical_maps
 
-from legendoptcarto.cli import optcarto_cli, resolve_launcher
-from legendoptcarto.config import Config
+from optmapper.cli import optmapper_cli, resolve_launcher
+from optmapper.config import Config
 
 
 def _write(tmp_path, cfg):
@@ -23,13 +23,13 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
         "site": "nersc",
         "slurm": {"node": {"mail-user": "me@example.com", "exclusive": True}},
     }
-    optcarto_cli([_write(tmp_path, base_config)])
+    optmapper_cli([_write(tmp_path, base_config)])
 
     calls = [json.loads(line) for line in fake_bin.read_text().splitlines()]
     assert len(calls) == 4
 
     out = tmp_path / "out"
-    resolved = out / "optcarto-config.json"
+    resolved = out / "optmapper-config.json"
     for i, call in enumerate(calls[:3]):
         assert "--parsable" in call
         assert "--account=m2676" in call
@@ -42,7 +42,7 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
         assert call[-2] == "--wrap"
         assert shlex.split(call[-1]) == [
             *("pixi", "run", "--as-is", "--manifest-path", "/prod/pixi.toml"),
-            *("legend-optcarto-work", "--verbose", "node", "--config", str(resolved)),
+            *("optmapper-work", "--verbose", "node", "--config", str(resolved)),
             *("--index", str(i)),
         ]
 
@@ -52,18 +52,18 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
     assert shlex.split(merge[-1])[-3:] == ["merge", "--config", str(resolved)]
 
     # only the resolved config and the log directory, no job scripts
-    assert sorted(p.name for p in out.iterdir()) == ["logs", "optcarto-config.json"]
+    assert sorted(p.name for p in out.iterdir()) == ["logs", "optmapper-config.json"]
     assert Config.load(resolved).statistics.nodes == 3
 
     # refuse to overwrite a production
     with pytest.raises(SystemExit):
-        optcarto_cli([_write(tmp_path, base_config)])
-    optcarto_cli([_write(tmp_path, base_config), "--force"])
+        optmapper_cli([_write(tmp_path, base_config)])
+    optmapper_cli([_write(tmp_path, base_config), "--force"])
 
 
 def test_single_node_has_no_merge_job(tmp_path, base_config, fake_bin):
     base_config["execution"] = {"site": "slurm"}
-    optcarto_cli([_write(tmp_path, base_config)])
+    optmapper_cli([_write(tmp_path, base_config)])
     calls = fake_bin.read_text().splitlines()
     assert len(calls) == 1
     assert "--exclusive" in json.loads(calls[0])
@@ -71,7 +71,7 @@ def test_single_node_has_no_merge_job(tmp_path, base_config, fake_bin):
 
 def test_dry_run(tmp_path, base_config, fake_bin):
     base_config["execution"] = {"site": "nersc"}
-    optcarto_cli([_write(tmp_path, base_config), "--dry-run"])
+    optmapper_cli([_write(tmp_path, base_config), "--dry-run"])
     assert not fake_bin.exists()
     assert not (tmp_path / "out").exists()
 
@@ -79,7 +79,7 @@ def test_dry_run(tmp_path, base_config, fake_bin):
 def test_invalid_config(tmp_path, base_config, fake_bin):
     base_config["emission"] = {"spectrum": "pygeomoptics.nonexistent"}
     with pytest.raises(SystemExit):
-        optcarto_cli([_write(tmp_path, base_config)])
+        optmapper_cli([_write(tmp_path, base_config)])
     assert not fake_bin.exists()
 
 
@@ -101,7 +101,7 @@ def test_launcher(base_config, monkeypatch):
 def test_local_production(tmp_path, base_config, nodes):
     base_config["statistics"]["nodes"] = nodes
     base_config["processing"]["keep_stp"] = True
-    optcarto_cli([_write(tmp_path, base_config)])
+    optmapper_cli([_write(tmp_path, base_config)])
 
     out = tmp_path / "out"
     final = out / "test-map.lh5"

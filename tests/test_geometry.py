@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from legendoptcarto.config import Config, ConfigError
-from legendoptcarto.geometry import build_gdml
+from optmapper.config import Config, ConfigError
+from optmapper.geometry import build_gdml
 
 FAKE_GENERATOR = """\
 #!{python}

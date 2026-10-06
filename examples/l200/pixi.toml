@@ -11,4 +11,4 @@ reboost = "==1.3.1"
 remage = ">=0.1.0,<1.2"
 
 [pypi-dependencies]
-legend-optcarto = { git = "https://github.com/legend-exp/legend-optcarto" }
+optmapper = { git = "https://github.com/legend-exp/optmapper" }

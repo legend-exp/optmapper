@@ -1,4 +1,4 @@
-/src/legendoptcarto/_version.py
+/src/optmapper/_version.py
 
 __pycache__/
 *.py[cod]

@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "legend-optcarto"
+name = "optmapper"
 description = "Production of LEGEND optical maps on batch systems"
 authors = [
     { name = "Luigi Pertoldi", email = "gipert@pm.me" },
@@ -38,8 +38,8 @@ dynamic = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/legend-exp/legend-optcarto"
-"Bug Tracker" = "https://github.com/legend-exp/legend-optcarto/issues"
+Homepage = "https://github.com/legend-exp/optmapper"
+"Bug Tracker" = "https://github.com/legend-exp/optmapper/issues"
 
 [project.optional-dependencies]
 test = [
@@ -49,11 +49,11 @@ test = [
 ]
 
 [project.scripts]
-legend-optcarto = "legendoptcarto.cli:optcarto_cli"
-legend-optcarto-work = "legendoptcarto.work:work_cli"
+optmapper = "optmapper.cli:optmapper_cli"
+optmapper-work = "optmapper.work:work_cli"
 
 [tool.setuptools_scm]
-write_to = "src/legendoptcarto/_version.py"
+write_to = "src/optmapper/_version.py"
 
 [tool.setuptools]
 include-package-data = true
@@ -69,7 +69,7 @@ where = [
 namespaces = false
 
 [tool.setuptools.package-data]
-legendoptcarto = ["templates/*", "sites/*"]
+optmapper = ["templates/*", "sites/*"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from legendoptcarto.config import Config, ConfigError
-from legendoptcarto.macro import confinement_commands, energy_commands, render_macro
+from optmapper.config import Config, ConfigError
+from optmapper.macro import confinement_commands, energy_commands, render_macro
 
 
 def test_default_macro(base_config):

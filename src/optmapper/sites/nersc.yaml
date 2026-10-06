@@ -1,6 +1,6 @@
 # NERSC Perlmutter CPU nodes, LEGEND allocation.
 scheduler: slurm
-scratch_dir: $PSCRATCH/legend-optcarto
+scratch_dir: $PSCRATCH/optmapper
 slurm:
   node:
     account: m2676

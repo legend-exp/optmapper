@@ -53,13 +53,13 @@ def load_site(site: str | Mapping) -> dict:
     """
     if isinstance(site, Mapping):
         return dict(site)
-    preset = resources.files("legendoptcarto") / "sites" / f"{site}.yaml"
+    preset = resources.files("optmapper") / "sites" / f"{site}.yaml"
     if preset.is_file():
         return dbetto.utils.load_dict(str(preset))
     if Path(site).is_file():
         return dbetto.utils.load_dict(site)
     available = sorted(
-        Path(p.name).stem for p in (resources.files("legendoptcarto") / "sites").iterdir()
+        Path(p.name).stem for p in (resources.files("optmapper") / "sites").iterdir()
     )
     msg = f"site preset '{site}' not found, available presets: {available} (or a file path)"
     raise ConfigError(msg)
@@ -315,7 +315,7 @@ class Config:
 
     @property
     def resolved_config_file(self) -> Path:
-        return Path(self.output_dir) / "optcarto-config.json"
+        return Path(self.output_dir) / "optmapper-config.json"
 
     @property
     def gdml_file(self) -> Path:

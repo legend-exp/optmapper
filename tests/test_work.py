@@ -6,8 +6,8 @@ import subprocess
 import pytest
 from reboost.optmap.create import list_optical_maps
 
-from legendoptcarto.config import Config
-from legendoptcarto.work import _natural_key, run_merge, work_cli
+from optmapper.config import Config
+from optmapper.work import _natural_key, run_merge, work_cli
 
 
 def test_natural_key(tmp_path):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from legendoptcarto.config import Config, ConfigError, deep_merge, load_site
+from optmapper.config import Config, ConfigError, deep_merge, load_site
 
 
 def test_load_relative_paths(tmp_path):

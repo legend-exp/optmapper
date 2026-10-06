@@ -100,7 +100,7 @@ def render_macro(cfg: Config, n_events: int) -> str:
     if cfg.advanced.template is not None:
         template = Path(cfg.advanced.template).read_text()
     else:
-        template = (resources.files("legendoptcarto") / "templates" / "optmap.mac").read_text()
+        template = (resources.files("optmapper") / "templates" / "optmap.mac").read_text()
 
     try:
         return string.Template(template).substitute(

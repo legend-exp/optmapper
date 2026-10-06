@@ -1,4 +1,4 @@
-# legend-optcarto
+# optmapper
 
 Production of LEGEND optical maps on batch systems.
 
@@ -6,17 +6,17 @@ An optical map gives, for each position in a volume (e.g. the liquid argon), the
 probability that an optical photon emitted there is detected by each optical
 detector. Building one requires simulating billions of photons with
 [remage](https://github.com/legend-exp/remage) and histogramming the result with
-[reboost](https://github.com/legend-exp/reboost). `legend-optcarto` takes a
-single configuration file and runs the whole chain on one or many compute nodes.
+[reboost](https://github.com/legend-exp/reboost). `optmapper` takes a single
+configuration file and runs the whole chain on one or many compute nodes.
 
 ## Overview
 
 The package provides two programs:
 
-- `legend-optcarto`, the user facing program. It validates the configuration,
-  builds the GDML geometry, submits the jobs and exits: it does not stay in the
+- `optmapper`, the user facing program. It validates the configuration, builds
+  the GDML geometry, submits the jobs and exits: it does not stay in the
   foreground and does not run as a daemon.
-- `legend-optcarto-work`, the worker program, started by the jobs on the compute
+- `optmapper-work`, the worker program, started by the jobs on the compute
   nodes. Users do not normally call it.
 
 Each node job:
@@ -28,11 +28,11 @@ Each node job:
    deletes the remage output files from the scratch area
 4. merges all its intermediate maps into one node map
 
-With more than one node, `legend-optcarto` also submits a merge job, which
-depends on all node jobs (`--dependency=afterany:...`) and merges the node maps
-into the final map. If some node jobs fail, the merge job merges the node maps
-that exist and prints a warning. With a single node, the node job writes the
-final map directly.
+With more than one node, `optmapper` also submits a merge job, which depends on
+all node jobs (`--dependency=afterany:...`) and merges the node maps into the
+final map. If some node jobs fail, the merge job merges the node maps that exist
+and prints a warning. With a single node, the node job writes the final map
+directly.
 
 On Slurm, jobs are submitted with `sbatch --wrap`: no job script is written to
 disk.
@@ -56,7 +56,7 @@ reboost = "==1.3.1"
 remage = ">=0.1.0,<1.2"
 
 [pypi-dependencies]
-legend-optcarto = { git = "https://github.com/legend-exp/legend-optcarto" }
+optmapper = { git = "https://github.com/legend-exp/optmapper" }
 ```
 
 and install the environment:
@@ -68,7 +68,7 @@ and install the environment:
 ## Usage
 
 ```console
-> pixi run legend-optcarto optmap.yaml
+> pixi run optmapper optmap.yaml
 ```
 
 Options:
@@ -79,7 +79,7 @@ Options:
 - `--verbose`/`-v`: more output
 
 The jobs run the worker with `pixi run --as-is` in the same pixi environment
-`legend-optcarto` was started from. Set `execution.launcher` to change that.
+`optmapper` was started from. Set `execution.launcher` to change that.
 
 The output directory contains:
 
@@ -87,8 +87,8 @@ The output directory contains:
 | ------------------------ | ---------------------------------------------------- |
 | `<name>.lh5`             | the final optical map                                |
 | `<name>.mac`             | the remage macro (written by the first node job)     |
-| `optcarto-config.json`   | the resolved configuration, read by the workers      |
-| `geom.gdml`              | the geometry (if built by `legend-optcarto`)         |
+| `optmapper-config.json`  | the resolved configuration, read by the workers      |
+| `geom.gdml`              | the geometry (if built by `optmapper`)               |
 | `geom-config.json`       | the geometry configuration passed to the generator   |
 | `logs/`                  | geometry and job logs                                |
 | `nodes/<name>-nodeN.lh5` | the node maps (only with more than one node)         |
@@ -150,7 +150,7 @@ Official maps use a LEGEND geometry generator, like
   `--pygeom-optics-plugin` option, to change optical properties
 - `metadata` (optional): path to `legend-metadata`, set as `LEGEND_METADATA`
 
-`legend-optcarto` runs the generator once, before submitting the jobs.
+`optmapper` runs the generator once, before submitting the jobs.
 
 Unofficial maps can use a GDML file instead:
 
@@ -215,7 +215,7 @@ whole `volume`.
 - `pre_init_commands`: macro commands inserted before `/run/initialize`
 - `commands`: macro commands inserted before `/run/beamOn`
 - `template`: a custom macro template, see the
-  [default template](src/legendoptcarto/templates/optmap.mac) for the available
+  [default template](src/optmapper/templates/optmap.mac) for the available
   placeholders
 - `remage_args`: extra remage command line options, default
   `["--ignore-warnings"]`
@@ -241,7 +241,7 @@ option set by the site preset.
 
 A site preset collects the options of a computing facility, merged with the
 user's `execution` block. The presets shipped with the package are in
-[`src/legendoptcarto/sites/`](src/legendoptcarto/sites):
+[`src/optmapper/sites/`](src/optmapper/sites):
 
 - `nersc`: Perlmutter CPU nodes with the LEGEND allocation. Node jobs take a
   full node, the merge job runs in the `shared` QOS. Scratch is on `$PSCRATCH`.
@@ -250,7 +250,7 @@ user's `execution` block. The presets shipped with the package are in
   foreground. For tests and small productions.
 
 To port the workflow to another Slurm facility, write a preset file like
-[`nersc.yaml`](src/legendoptcarto/sites/nersc.yaml) and pass its path:
+[`nersc.yaml`](src/optmapper/sites/nersc.yaml) and pass its path:
 
 ```yaml
 execution:
@@ -258,5 +258,5 @@ execution:
 ```
 
 Other batch systems need a new `Scheduler` class in
-[`schedulers.py`](src/legendoptcarto/schedulers.py), which submits a command
-with options and dependencies and returns a job ID.
+[`schedulers.py`](src/optmapper/schedulers.py), which submits a command with
+options and dependencies and returns a job ID.

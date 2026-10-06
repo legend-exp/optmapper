@@ -64,7 +64,7 @@ def _create_map(cfg: Config, inputs: list[Path], output: Path) -> None:
     cmd = [
         sys.executable,
         "-m",
-        "legendoptcarto.work",
+        "optmapper.work",
         "create",
         "--config",
         str(cfg.resolved_config_file),
@@ -197,8 +197,8 @@ def run_merge(cfg: Config) -> None:
 
 def work_cli(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        prog="legend-optcarto-work",
-        description="%(prog)s: optical map production worker, usually started by legend-optcarto",
+        prog="optmapper-work",
+        description="%(prog)s: optical map production worker, usually started by optmapper",
     )
     parser.add_argument("--verbose", "-v", action="count", default=0, help="increase verbosity")
     subparsers = parser.add_subparsers(dest="command", required=True)

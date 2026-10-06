@@ -20,7 +20,7 @@ def resolve_launcher(cfg: Config) -> list[str]:
     """Command prefix to run the worker in the current software environment.
 
     Defaults to ``pixi run --as-is`` with the manifest of the environment
-    ``legend-optcarto`` is running in, if any.
+    ``optmapper`` is running in, if any.
     """
     if cfg.execution.launcher is not None:
         return list(cfg.execution.launcher)
@@ -39,7 +39,7 @@ def submit(cfg: Config, dry_run: bool = False) -> list[str]:
     scheduler = get_scheduler(cfg.execution.scheduler, dry_run=dry_run)
     work = [
         *resolve_launcher(cfg),
-        "legend-optcarto-work",
+        "optmapper-work",
         "--verbose",
     ]
     config = ["--config", str(cfg.resolved_config_file)]
@@ -73,9 +73,9 @@ def submit(cfg: Config, dry_run: bool = False) -> list[str]:
     return ids
 
 
-def optcarto_cli(argv: list[str] | None = None) -> None:
+def optmapper_cli(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        prog="legend-optcarto",
+        prog="optmapper",
         description="%(prog)s: produce LEGEND optical maps. Prepares the geometry, "
         "submits the production jobs according to the configuration and exits.",
     )
