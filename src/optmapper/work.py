@@ -188,16 +188,17 @@ def run_merge(cfg: Config) -> None:
     nodes = [cfg.node_map(i) for i in range(cfg.statistics.nodes)]
     found = [p for p in nodes if p.is_file()]
     missing = [p for p in nodes if not p.is_file()]
+    if not found:
+        msg = f"all node jobs failed, no node map to merge: see the node job logs in {cfg.log_dir}"
+        raise RuntimeError(msg)
     if missing:
         log.warning(
-            "%d of %d node maps are missing (failed jobs?), merging the remaining ones: %s",
+            "%d of %d node maps are missing (failed jobs?), see the logs in %s: %s",
             len(missing),
             len(nodes),
+            cfg.log_dir,
             ", ".join(p.name for p in missing),
         )
-    if not found:
-        msg = "no node map found, nothing to merge"
-        raise RuntimeError(msg)
 
     with _step(f"merging {len(found)} node maps into {cfg.final_map}"):
         merge_maps(cfg, found, cfg.final_map, cfg.final_map.parent)

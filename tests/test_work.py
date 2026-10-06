@@ -27,7 +27,7 @@ def test_merge_with_failed_nodes(tmp_path, base_config, caplog):
     out.mkdir()
     cfg.dump(cfg.resolved_config_file)
 
-    with pytest.raises(RuntimeError, match="no node map found"):
+    with pytest.raises(RuntimeError, match="all node jobs failed"):
         run_merge(cfg)
 
     # one node map from fake stp files
