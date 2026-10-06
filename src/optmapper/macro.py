@@ -11,6 +11,7 @@ from importlib import resources
 from pathlib import Path
 
 import pint
+from pygeomoptics import store
 
 from .config import Config, ConfigError, EmissionConfig, OptmapConfig
 
@@ -29,13 +30,13 @@ def _quantity(value: str | float, default_unit: str, what: str) -> pint.Quantity
 def confinement_commands(optmap: OptmapConfig) -> list[str]:
     """Primary vertex confinement to the optical map volume(s) and bounds."""
     volumes = [optmap.volume] if isinstance(optmap.volume, str) else optmap.volume
-    cmds = ["/RMG/Generator/Confine Volume"]
+    cmds = [
+        "/RMG/Generator/Confine Volume",
+        "/RMG/Generator/Confinement/ForceContainmentCheck",
+    ]
 
     if optmap.shape != "none":
-        cmds += [
-            "/RMG/Generator/Confinement/SamplingMode IntersectPhysicalWithGeometrical",
-            "/RMG/Generator/Confinement/ForceContainmentCheck true",
-        ]
+        cmds += ["/RMG/Generator/Confinement/SamplingMode IntersectPhysicalWithGeometrical"]
     cmds += [f"/RMG/Generator/Confinement/Physical/AddVolume {v}" for v in volumes]
     if optmap.shape == "none":
         return cmds
@@ -71,8 +72,12 @@ def load_spectrum_function(spec: str) -> Callable[[str, bool], None]:
     return func
 
 
-def energy_commands(emission: EmissionConfig) -> list[str]:
-    """GPS energy distribution of the optical photons."""
+def energy_commands(emission: EmissionConfig, optics_plugin: str | None = None) -> list[str]:
+    """GPS energy distribution of the optical photons.
+
+    The pygeom-optics `optics_plugin`, if any, is applied while generating the spectrum, so
+    that it sees the same material properties as the geometry.
+    """
     if emission.gaussian is not None:
         try:
             with ureg.context("sp"):
@@ -89,10 +94,15 @@ def energy_commands(emission: EmissionConfig) -> list[str]:
 
     assert emission.spectrum is not None
     func = load_spectrum_function(emission.spectrum)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        fn = Path(tmpdir) / "spectrum.mac"
-        func(str(fn), True)
-        return fn.read_text().strip().splitlines()
+    if optics_plugin is not None:
+        store.load_user_material_code(optics_plugin)
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fn = Path(tmpdir) / "spectrum.mac"
+            func(str(fn), True)
+            return fn.read_text().strip().splitlines()
+    finally:
+        store.reset_all_to_original()
 
 
 def render_macro(cfg: Config, n_events: int) -> str:
@@ -107,7 +117,7 @@ def render_macro(cfg: Config, n_events: int) -> str:
             name=cfg.name,
             pre_init_commands="\n".join(cfg.advanced.pre_init_commands),
             confinement_commands="\n".join(confinement_commands(cfg.optmap)),
-            energy_commands="\n".join(energy_commands(cfg.emission)),
+            energy_commands="\n".join(energy_commands(cfg.emission, cfg.geometry.optics_plugin)),
             commands="\n".join(cfg.advanced.commands),
             n_events=n_events,
         )

@@ -7,7 +7,8 @@ output_dir: optmap-l200cfg01
 geometry:
   executable: legend-pygeom-l200
   config: geom-config.yaml
-  metadata: legend-metadata
+  env:
+    LEGEND_METADATA: $_/legend-metadata
 
 emission:
   # 128 nm LAr scintillation, as in the former macro

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+
 import pytest
 
 from optmapper.config import Config, ConfigError
@@ -56,6 +58,7 @@ def test_no_shape(base_config):
     cmds = confinement_commands(Config.from_dict(base_config).optmap)
     assert cmds == [
         "/RMG/Generator/Confine Volume",
+        "/RMG/Generator/Confinement/ForceContainmentCheck",
         "/RMG/Generator/Confinement/Physical/AddVolume liquid_argon",
     ]
 
@@ -79,6 +82,25 @@ def test_pygeomoptics_spectrum(base_config):
     cmds = energy_commands(Config.from_dict(base_config).emission)
     assert "/gps/ene/type     Arb" in cmds
     assert sum(c.startswith("/gps/hist/point") for c in cmds) > 10
+
+
+def test_spectrum_with_optics_plugin(tmp_path, base_config):
+    plugin = tmp_path / "plugin.py"
+    plugin.write_text(
+        "from pygeomoptics.lar import lar_emission_spectrum\n"
+        "lar_emission_spectrum.replace_implementation(lambda wvl: 0.5 * wvl / wvl)\n"
+    )
+    base_config["emission"] = {"spectrum": "pygeomoptics.lar.g4gps_lar_emissions_spectrum"}
+    emission = Config.from_dict(base_config).emission
+
+    default = energy_commands(emission)
+    flat = energy_commands(emission, str(plugin))
+    assert flat != default
+    assert energy_commands(emission) == default
+
+    # a flat spectrum in wavelength is monotonic in energy, unlike the measured one
+    points = [float(c.split()[-1]) for c in flat if c.startswith("/gps/hist/point")][1:-1]
+    assert all(a > b for a, b in itertools.pairwise(points))
 
 
 @pytest.mark.parametrize("spec", ["pygeomoptics.lar.nonexistent", "nomodule.func", "os.getcwd"])

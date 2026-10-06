@@ -45,9 +45,7 @@ def build_gdml(cfg: Config) -> None:
 
     cmd += ["--", str(cfg.gdml_file)]
 
-    env = os.environ.copy()
-    if geom.metadata is not None:
-        env["LEGEND_METADATA"] = geom.metadata
+    env = os.environ | geom.env
 
     log_file = cfg.log_dir / "geometry.log"
     log.info("building geometry: %s (log in %s)", shlex.join(cmd), log_file)

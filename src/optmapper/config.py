@@ -6,6 +6,7 @@ import copy
 import dataclasses
 import json
 import os
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from importlib import resources
@@ -73,7 +74,8 @@ class GeometryConfig:
     executable: str | None = None
     config: str | dict | None = None
     optics_plugin: str | None = None
-    metadata: str | None = None
+    env: dict[str, str] = field(default_factory=dict)
+    """Environment of the generator, e.g. ``LEGEND_METADATA``. ``$_`` is the config directory."""
 
     @classmethod
     def from_dict(cls, d: Mapping, base: Path) -> GeometryConfig:
@@ -82,10 +84,8 @@ class GeometryConfig:
         if (g.gdml is None) == (g.executable is None):
             msg = "geometry: specify exactly one of 'gdml' or 'executable'"
             raise ConfigError(msg)
-        if g.gdml is not None and any(
-            v is not None for v in (g.config, g.optics_plugin, g.metadata)
-        ):
-            msg = "geometry: 'config', 'optics_plugin' and 'metadata' require 'executable'"
+        if g.gdml is not None and (g.config is not None or g.optics_plugin is not None or g.env):
+            msg = "geometry: 'config', 'optics_plugin' and 'env' require 'executable'"
             raise ConfigError(msg)
         g.gdml = _resolve_path(g.gdml, base)
         if not isinstance(g.config, Mapping):
@@ -93,7 +93,9 @@ class GeometryConfig:
         else:
             g.config = dict(g.config)
         g.optics_plugin = _resolve_path(g.optics_plugin, base)
-        g.metadata = _resolve_path(g.metadata, base)
+        g.env = {
+            k: os.path.expandvars(re.sub(r"\$_(?!\w)", str(base), str(v))) for k, v in g.env.items()
+        }
         return g
 
 

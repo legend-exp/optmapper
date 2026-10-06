@@ -16,7 +16,9 @@ geometry:
   executable: legend-pygeom-l200
   config: geom-config.yaml
   optics_plugin: plugin.py
-  metadata: $HOME/legend-metadata
+  env:
+    LEGEND_METADATA: $_/legend-metadata
+    LEGEND1000_METADATA: $HOME/legend1000-metadata
 emission:
   spectrum: pygeomoptics.lar.g4gps_lar_emissions_spectrum
 optmap:
@@ -30,7 +32,8 @@ statistics:
     assert cfg.output_dir == str(tmp_path / "prod" / "out")
     assert cfg.geometry.config == str(tmp_path / "prod" / "geom-config.yaml")
     assert cfg.geometry.optics_plugin == str(tmp_path / "prod" / "plugin.py")
-    assert not cfg.geometry.metadata.startswith("$")
+    assert cfg.geometry.env["LEGEND_METADATA"] == str(tmp_path / "prod" / "legend-metadata")
+    assert not cfg.geometry.env["LEGEND1000_METADATA"].startswith("$")
     assert cfg.gdml_file == tmp_path / "prod" / "out" / "geom.gdml"
     assert cfg.node_map(3).name == "l200-test-node0003.lh5"
     assert cfg.final_map.name == "l200-test.lh5"
@@ -90,6 +93,7 @@ def test_deep_merge():
         ({"geometry": {}}, "exactly one of"),
         ({"geometry": {"gdml": "a.gdml", "executable": "x"}}, "exactly one of"),
         ({"geometry": {"gdml": "a.gdml", "config": "c.yaml"}}, "require 'executable'"),
+        ({"geometry": {"gdml": "a.gdml", "env": {"A": "b"}}}, "require 'executable'"),
         ({"emission": {"gaussian": {"mean": 1}}}, "both"),
         ({"emission": {}}, "exactly one of"),
         ({"statistics": {"nodes": 0}}, "positive integer"),

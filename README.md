@@ -108,7 +108,8 @@ output_dir: optmap-l200cfg01
 geometry:
   executable: legend-pygeom-l200
   config: geom-config.yaml
-  metadata: legend-metadata
+  env:
+    LEGEND_METADATA: $_/legend-metadata
 
 emission:
   gaussian: { mean: 9.68 eV, sigma: 0.22 eV }
@@ -147,8 +148,12 @@ Official maps use a LEGEND geometry generator, like
 - `config` (optional): geometry configuration, a file name or an inline mapping.
   In a file, `$_` is replaced by the directory of that file.
 - `optics_plugin` (optional): Python file passed to the generator's
-  `--pygeom-optics-plugin` option, to change optical properties
-- `metadata` (optional): path to `legend-metadata`, set as `LEGEND_METADATA`
+  `--pygeom-optics-plugin` option, to change optical properties. It is also
+  applied when generating the `emission.spectrum`.
+- `env` (optional): environment variables for the generator, e.g.
+  `LEGEND_METADATA` (legend-pygeom-l200) or `LEGEND1000_METADATA`
+  (legend-pygeom-l1000). `$_` is replaced by the directory of the configuration
+  file, other environment variables are expanded.
 
 `optmapper` runs the generator once, before submitting the jobs.
 
