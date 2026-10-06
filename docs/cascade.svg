@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 790" width="800" height="790" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13">
+  <title>optmapper map production cascade</title>
+  <style>
+    text { fill: #1f2328; }
+    .muted { fill: #59636e; }
+    .b { font-weight: 600; }
+    .k { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .stat { fill: #0969da; }
+    .proc { fill: #bc4c00; }
+    .frame { fill: #f6f8fa; stroke: #d1d9e0; stroke-width: 1.5; }
+    .loop { fill: none; stroke: #59636e; stroke-width: 1.2; stroke-dasharray: 6 4; }
+    .box { fill: #ffffff; stroke: #d1d9e0; stroke-width: 1.5; }
+    .file { fill: #ffffff; stroke: #59636e; stroke-width: 1; }
+    .arrow { fill: none; stroke: #59636e; stroke-width: 1.5; }
+    .bracket { fill: none; stroke: #bc4c00; stroke-width: 1.5; }
+    .head { fill: #59636e; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #e6edf3; }
+      .muted, .head { fill: #9198a1; }
+      .stat { fill: #4493f8; }
+      .proc { fill: #f0883e; }
+      .frame { fill: #151b23; stroke: #3d444d; }
+      .loop, .arrow { stroke: #9198a1; }
+      .box, .file { fill: #0d1117; stroke: #3d444d; }
+      .file { stroke: #9198a1; }
+      .bracket { stroke: #f0883e; }
+    }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0 0 L10 5 L0 10 z"/>
+    </marker>
+  </defs>
+
+  <!-- node jobs, stacked: statistics.nodes -->
+  <rect class="frame" x="44" y="46" width="746" height="400" rx="10"/>
+  <rect class="frame" x="32" y="58" width="746" height="400" rx="10"/>
+  <rect class="frame" x="20" y="70" width="746" height="400" rx="10"/>
+  <text x="36" y="96" class="b">node job</text>
+  <text x="694" y="96"><tspan class="muted">× </tspan><tspan class="k stat">nodes</tspan></text>
+
+  <!-- remage runs: statistics.runs_per_node -->
+  <rect class="loop" x="36" y="110" width="550" height="340" rx="8"/>
+  <text x="50" y="134" class="b">remage run</text>
+  <text x="326" y="134"><tspan class="muted">× </tspan><tspan class="k stat">runs_per_node</tspan><tspan class="muted">, one after the other</tspan></text>
+
+  <!-- remage -->
+  <rect class="box" x="48" y="205" width="162" height="140" rx="6"/>
+  <text x="129" y="232" text-anchor="middle" class="b">remage</text>
+  <text x="129" y="260" text-anchor="middle" class="k stat">processes_per_node</text>
+  <text x="129" y="277" text-anchor="middle" class="muted">processes</text>
+  <text x="129" y="305" text-anchor="middle" class="k stat">primaries_per_process</text>
+  <text x="129" y="322" text-anchor="middle" class="muted">photons each</text>
+  <path class="arrow" marker-end="url(#head)" d="M210 275 H230"/>
+
+  <!-- stp files, one per remage process -->
+  <g>
+    <rect class="file" x="234" y="162" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="192" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="222" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="252" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="282" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="312" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="342" width="34" height="22" rx="2"/>
+    <rect class="file" x="234" y="372" width="34" height="22" rx="2"/>
+  </g>
+  <text x="251" y="418" text-anchor="middle">stp files</text>
+  <text x="251" y="434" text-anchor="middle" class="muted">one per process</text>
+
+  <!-- chunks: processing.stp_files_per_map -->
+  <path class="bracket" d="M276 162 h8 v112 h-8"/>
+  <path class="bracket" d="M276 282 h8 v112 h-8"/>
+  <text x="343" y="206" text-anchor="middle" class="muted">chunks of</text>
+  <text x="343" y="326" text-anchor="middle" class="muted">chunks of</text>
+  <text x="343" y="240" text-anchor="middle" class="k proc" font-size="11">stp_files_per_map</text>
+  <text x="343" y="360" text-anchor="middle" class="k proc" font-size="11">stp_files_per_map</text>
+  <path class="arrow" marker-end="url(#head)" d="M290 218 H398"/>
+  <path class="arrow" marker-end="url(#head)" d="M290 338 H398"/>
+
+  <!-- intermediate maps: processing.parallel_maps x processing.procs_per_map -->
+  <rect class="box" x="402" y="168" width="170" height="100" rx="6"/>
+  <rect class="box" x="402" y="288" width="170" height="100" rx="6"/>
+  <text x="487" y="192" text-anchor="middle" class="b" font-size="12.5">reboost-optmap create</text>
+  <text x="487" y="216" text-anchor="middle" class="k proc">procs_per_map</text>
+  <text x="487" y="233" text-anchor="middle" class="muted">processes</text>
+  <text x="487" y="256" text-anchor="middle">→ intermediate map</text>
+  <text x="487" y="312" text-anchor="middle" class="b" font-size="12.5">reboost-optmap create</text>
+  <text x="487" y="336" text-anchor="middle" class="k proc">procs_per_map</text>
+  <text x="487" y="353" text-anchor="middle" class="muted">processes</text>
+  <text x="487" y="376" text-anchor="middle">→ intermediate map</text>
+  <text x="487" y="418" text-anchor="middle" class="k proc">parallel_maps</text>
+  <text x="487" y="434" text-anchor="middle" class="muted">created at a time</text>
+
+  <!-- node map -->
+  <path class="arrow" marker-end="url(#head)" d="M572 218 C592 218 592 262 606 266"/>
+  <path class="arrow" marker-end="url(#head)" d="M572 338 C592 338 592 298 606 294"/>
+  <rect class="box" x="610" y="225" width="140" height="110" rx="6"/>
+  <text x="680" y="250" text-anchor="middle" class="b">merge</text>
+  <text x="680" y="274" text-anchor="middle" class="k proc">merge_procs</text>
+  <text x="680" y="291" text-anchor="middle" class="muted">processes</text>
+  <text x="680" y="318" text-anchor="middle">→ node map</text>
+
+  <!-- merge job -->
+  <path class="arrow" marker-end="url(#head)" d="M680 335 V516"/>
+  <text x="690" y="500" class="muted" font-size="11">node maps</text>
+  <rect class="box" x="590" y="520" width="180" height="100" rx="6"/>
+  <text x="680" y="545" text-anchor="middle" class="b">merge job</text>
+  <text x="680" y="569" text-anchor="middle" class="k proc">merge_procs</text>
+  <text x="680" y="586" text-anchor="middle" class="muted">processes</text>
+  <text x="680" y="609" text-anchor="middle">→ final map</text>
+  <text x="574" y="563" text-anchor="end" class="muted" font-size="12">only with more than one node,</text>
+  <text x="574" y="579" text-anchor="end" class="muted" font-size="12">otherwise the node map is final</text>
+
+  <!-- relations -->
+  <text x="20" y="652" class="b">How the knobs combine</text>
+  <text x="20" y="678"><tspan class="muted">photons </tspan>= <tspan class="k stat">nodes</tspan> × <tspan class="k stat">runs_per_node</tspan> × <tspan class="k stat">processes_per_node</tspan> × <tspan class="k stat">primaries_per_process</tspan></text>
+  <text x="20" y="702"><tspan class="muted">intermediate maps per run </tspan>= ⌈ <tspan class="k stat">processes_per_node</tspan> / <tspan class="k proc">stp_files_per_map</tspan> ⌉<tspan class="muted">, all merged into the node map</tspan></text>
+  <text x="20" y="726"><tspan class="muted">processes while creating maps </tspan>= <tspan class="k proc">parallel_maps</tspan> × <tspan class="k proc">procs_per_map</tspan><tspan class="muted">, keep it close to the CPUs of a node</tspan></text>
+  <text x="20" y="756"><tspan class="k stat">blue</tspan><tspan class="muted">: </tspan><tspan class="k">statistics.*</tspan><tspan class="muted">, sets the simulated statistics</tspan></text>
+  <text x="20" y="778"><tspan class="k proc">orange</tspan><tspan class="muted">: </tspan><tspan class="k">processing.*</tspan><tspan class="muted">, sets resources and memory use, not the result</tspan></text>
+</svg>

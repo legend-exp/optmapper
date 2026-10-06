@@ -242,6 +242,10 @@ compute node. `sbatch` options are given without the leading `--`: `key: value`
 becomes `--key=value`, `key: true` becomes `--key`, and `key: null` removes an
 option set by the site preset.
 
+## Illustration of statistics/processing options 
+
+![The map production cascade and the options that control it](docs/cascade.svg)
+
 ## Execution sites
 
 A site preset collects the options of a computing facility, merged with the
