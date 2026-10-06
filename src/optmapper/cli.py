@@ -93,7 +93,8 @@ def optmapper_cli(argv: list[str] | None = None) -> None:
         help="allow reusing an output directory that already contains a production",
     )
     args = parser.parse_args(argv)
-    setup_log(args.verbose + 1)
+    # report the submitted jobs by default
+    setup_log((logging.INFO, logging.DEBUG)[min(args.verbose, 1)])
 
     try:
         cfg = Config.load(args.config)

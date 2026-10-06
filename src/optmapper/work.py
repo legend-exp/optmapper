@@ -221,7 +221,7 @@ def work_cli(argv: list[str] | None = None) -> None:
     create_parser.add_argument("output", help="output map file")
 
     args = parser.parse_args(argv)
-    setup_log(args.verbose)
+    setup_log((None, logging.INFO, logging.DEBUG)[min(args.verbose, 2)])
 
     cfg = Config.load(args.config)
     os.environ.update(cfg.execution.env)

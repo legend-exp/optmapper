@@ -2,15 +2,28 @@ from __future__ import annotations
 
 import logging
 
+import colorlog
 
-def setup_log(verbosity: int = 0) -> None:
-    """Log to the terminal, `verbosity` 0, 1 and 2 means warning, info and debug."""
-    logging.basicConfig(
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-        level=logging.WARNING,
-    )
-    level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbosity, 2)]
-    logging.getLogger("optmapper").setLevel(level)
-    # reboost is chatty, only show its info messages from -vv on
-    logging.getLogger("reboost").setLevel(logging.INFO if verbosity >= 2 else logging.WARNING)
+
+def setup_log(level: int | None = None, multiproc: bool = False) -> None:
+    """Setup a colored logger for this package.
+
+    Parameters
+    ----------
+    level
+        initial log level, or ``None`` to use the default.
+    multiproc
+        set to ``True`` to include process ID in log output (i.e. for multiprocessing setups)
+    """
+    fmt = "%(log_color)s%(name)s [%(levelname)s]"
+    if multiproc:
+        fmt += " (pid=%(process)s)"
+    fmt += " %(message)s"
+
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(fmt))
+
+    logger = logging.getLogger("optmapper")
+    logger.addHandler(handler)
+    if level is not None:
+        logger.setLevel(level)

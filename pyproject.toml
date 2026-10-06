@@ -28,6 +28,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "colorlog",
     "dbetto",
     "legend-pygeom-optics >=0.15.0",
     "pint",
