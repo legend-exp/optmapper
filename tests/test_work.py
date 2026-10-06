@@ -7,7 +7,7 @@ import pytest
 from reboost.optmap.create import list_optical_maps
 
 from optmapper.config import Config
-from optmapper.work import _natural_key, run_merge, work_cli
+from optmapper.work import _create_map, _natural_key, _reboost_create_args, run_merge, work_cli
 
 
 def test_natural_key(tmp_path):
@@ -41,12 +41,7 @@ def test_merge_with_failed_nodes(tmp_path, base_config, caplog):
         check=True,
     )
     cfg.node_map(1).parent.mkdir(parents=True)
-    work_cli(
-        [
-            *("create", "--config", str(cfg.resolved_config_file)),
-            *(str(tmp_path / "stp_p0.lh5"), str(cfg.node_map(1))),
-        ]
-    )
+    _create_map(_reboost_create_args(cfg, tmp_path), [tmp_path / "stp_p0.lh5"], cfg.node_map(1))
 
     with caplog.at_level(logging.WARNING):
         work_cli(["merge", "--config", str(cfg.resolved_config_file)])

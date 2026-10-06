@@ -16,7 +16,7 @@ from pathlib import Path
 
 Path(sys.argv[-1]).write_text("<gdml/>")
 Path(sys.argv[-1]).with_suffix(".call.json").write_text(
-    json.dumps({{"argv": sys.argv[1:], "metadata": os.environ.get("LEGEND1000_METADATA")}})
+    json.dumps({{"argv": sys.argv[1:], "env": os.environ.get("LEGEND1000_METADATA")}})
 )
 """
 
@@ -47,7 +47,7 @@ def test_build_gdml(tmp_path, base_config, monkeypatch):
         *("--pygeom-optics-plugin", str(tmp_path / "plugin.py")),
         *("--", str(cfg.gdml_file)),
     ]
-    assert call["metadata"] == str(tmp_path / "legend1000-metadata")
+    assert call["env"] == str(tmp_path / "legend1000-metadata")
     assert json.loads(stored.read_text()) == {
         "fiber_modules": "detailed",
         "file": f"{tmp_path}/x.json",

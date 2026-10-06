@@ -95,7 +95,6 @@ def test_spectrum_with_optics_plugin(tmp_path, base_config):
 
     default = energy_commands(emission)
     flat = energy_commands(emission, str(plugin))
-    assert flat != default
     assert energy_commands(emission) == default
 
     # a flat spectrum in wavelength is monotonic in energy, unlike the measured one

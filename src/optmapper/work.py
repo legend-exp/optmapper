@@ -10,11 +10,12 @@ import resource
 import shlex
 import shutil
 import subprocess
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
+
+import dbetto
 
 from .config import Config
 from .log_utils import setup_log
@@ -59,19 +60,25 @@ def merge_maps(cfg: Config, inputs: list[Path], output: Path, workdir: Path) -> 
     shutil.move(tmp, output)
 
 
-def _create_map(cfg: Config, inputs: list[Path], output: Path) -> None:
-    """Create a map in a separate process, as reboost spawns its own worker pool."""
-    cmd = [
-        sys.executable,
-        "-m",
-        "optmapper.work",
-        "create",
-        "--config",
-        str(cfg.resolved_config_file),
-        "--",
-        *map(str, inputs),
-        str(output),
+def _reboost_create_args(cfg: Config, workdir: Path) -> list[str]:
+    """Options of ``reboost-optmap create``, its input files are written to `workdir`."""
+    settings = workdir / "optmap-settings.json"
+    dbetto.utils.write_dict(cfg.optmap.reboost_settings(), str(settings))
+    args = [
+        *("--bufsize", str(cfg.processing.bufsize), "create"),
+        *("--settings", str(settings), "--geom", str(cfg.gdml_file)),
+        *("--n-procs", str(cfg.processing.procs_per_map)),
     ]
+    if cfg.optmap.detectors is not None:
+        detectors = workdir / "optmap-detectors.json"
+        dbetto.utils.write_dict(cfg.optmap.detectors, str(detectors))
+        args += ["--detectors", str(detectors)]
+    return args
+
+
+def _create_map(create_args: list[str], inputs: list[Path], output: Path) -> None:
+    """Create a map with ``reboost-optmap``, in a separate process as it spawns its own pool."""
+    cmd = ["reboost-optmap", *create_args, "--", *map(str, inputs), str(output)]
     res = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if res.returncode != 0:
         msg = f"map creation failed for {output.name}:\n{res.stdout}{res.stderr}"
@@ -113,6 +120,7 @@ def run_node(cfg: Config, index: int) -> None:
     proc = cfg.processing
     map_dir = scratch / "maps"
     map_dir.mkdir()
+    create_args = _reboost_create_args(cfg, scratch)
 
     for run in range(cfg.statistics.runs_per_node):
         stp_dir = scratch / "stp" / f"run{run:03d}"
@@ -149,7 +157,7 @@ def run_node(cfg: Config, index: int) -> None:
             ThreadPoolExecutor(proc.parallel_maps) as pool,
         ):
             futures = [
-                pool.submit(_create_map, cfg, chunk, map_dir / f"run{run:03d}-{k:04d}.lh5")
+                pool.submit(_create_map, create_args, chunk, map_dir / f"run{run:03d}-{k:04d}.lh5")
                 for k, chunk in enumerate(chunks)
             ]
             for f in futures:
@@ -215,11 +223,6 @@ def work_cli(argv: list[str] | None = None) -> None:
     merge_parser = subparsers.add_parser("merge", help="merge the node maps into the final map")
     _add_config(merge_parser)
 
-    create_parser = subparsers.add_parser("create", help="create a map from stp files (internal)")
-    _add_config(create_parser)
-    create_parser.add_argument("input", nargs="+", help="input stp files")
-    create_parser.add_argument("output", help="output map file")
-
     args = parser.parse_args(argv)
     setup_log((None, logging.INFO, logging.DEBUG)[min(args.verbose, 2)])
 
@@ -230,18 +233,6 @@ def work_cli(argv: list[str] | None = None) -> None:
         run_node(cfg, args.index)
     elif args.command == "merge":
         run_merge(cfg)
-    elif args.command == "create":
-        from reboost.optmap.create import create_optical_maps  # noqa: PLC0415
-
-        create_optical_maps(
-            args.input,
-            cfg.optmap.reboost_settings(),
-            cfg.processing.bufsize,
-            chfilter="*" if cfg.optmap.detectors is None else tuple(cfg.optmap.detectors),
-            output_lh5_fn=args.output,
-            n_procs=cfg.processing.procs_per_map,
-            geom_fn=str(cfg.gdml_file),
-        )
 
 
 if __name__ == "__main__":

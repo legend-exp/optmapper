@@ -6,7 +6,6 @@ import copy
 import dataclasses
 import json
 import os
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from importlib import resources
@@ -75,7 +74,7 @@ class GeometryConfig:
     config: str | dict | None = None
     optics_plugin: str | None = None
     env: dict[str, str] = field(default_factory=dict)
-    """Environment of the generator, e.g. ``LEGEND_METADATA``. ``$_`` is the config directory."""
+    """Environment of the generator, e.g. ``LEGEND_METADATA``."""
 
     @classmethod
     def from_dict(cls, d: Mapping, base: Path) -> GeometryConfig:
@@ -93,9 +92,7 @@ class GeometryConfig:
         else:
             g.config = dict(g.config)
         g.optics_plugin = _resolve_path(g.optics_plugin, base)
-        g.env = {
-            k: os.path.expandvars(re.sub(r"\$_(?!\w)", str(base), str(v))) for k, v in g.env.items()
-        }
+        g.env = {k: os.path.expandvars(str(v)) for k, v in g.env.items()}
         return g
 
 
@@ -271,8 +268,13 @@ class Config:
 
     @classmethod
     def from_dict(cls, d: Mapping, base: Path | None = None) -> Config:
-        """Build a config from a mapping, relative paths are resolved relative to `base`."""
+        """Build a config from a mapping, relative paths are resolved relative to `base`.
+
+        ``$_`` in any string value is replaced with `base`, as in dbetto.
+        """
         base = Path.cwd() if base is None else Path(base).resolve()
+        d = copy.deepcopy(dict(d))
+        dbetto.Props.subst_vars(d, var_values={"_": str(base)}, ignore_missing=True)
         _check_keys(d, {f.name for f in dataclasses.fields(cls)}, "top level")
         for k in ("name", "output_dir", "geometry", "emission", "optmap"):
             if k not in d:

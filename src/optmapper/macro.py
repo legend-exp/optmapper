@@ -6,12 +6,12 @@ import importlib
 import inspect
 import string
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from importlib import resources
 from pathlib import Path
 
 import pint
-from pygeomoptics import store
 
 from .config import Config, ConfigError, EmissionConfig, OptmapConfig
 
@@ -72,6 +72,21 @@ def load_spectrum_function(spec: str) -> Callable[[str, bool], None]:
     return func
 
 
+@contextmanager
+def _optics_plugin(plugin: str | None) -> Iterator[None]:
+    """Apply a pygeom-optics plugin, restoring the original material properties afterwards."""
+    if plugin is None:
+        yield
+        return
+    from pygeomoptics import store  # noqa: PLC0415
+
+    store.load_user_material_code(plugin)
+    try:
+        yield
+    finally:
+        store.reset_all_to_original()
+
+
 def energy_commands(emission: EmissionConfig, optics_plugin: str | None = None) -> list[str]:
     """GPS energy distribution of the optical photons.
 
@@ -94,15 +109,10 @@ def energy_commands(emission: EmissionConfig, optics_plugin: str | None = None) 
 
     assert emission.spectrum is not None
     func = load_spectrum_function(emission.spectrum)
-    if optics_plugin is not None:
-        store.load_user_material_code(optics_plugin)
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            fn = Path(tmpdir) / "spectrum.mac"
-            func(str(fn), True)
-            return fn.read_text().strip().splitlines()
-    finally:
-        store.reset_all_to_original()
+    with _optics_plugin(optics_plugin), tempfile.TemporaryDirectory() as tmpdir:
+        fn = Path(tmpdir) / "spectrum.mac"
+        func(str(fn), True)
+        return fn.read_text().strip().splitlines()
 
 
 def render_macro(cfg: Config, n_events: int) -> str:

@@ -52,7 +52,7 @@ platforms = ["linux-64"]
 [dependencies]
 python = "3.12.*"
 legend-pygeom-l200 = "==0.11.0"
-reboost = "==1.3.1"
+reboost = "==1.4.0"
 remage = ">=0.1.0,<1.2"
 
 [pypi-dependencies]
@@ -97,8 +97,9 @@ The output directory contains:
 ## Configuration
 
 The configuration is a YAML or JSON file. Relative paths are relative to the
-directory of the configuration file. A complete example, equivalent to the
-former `workflow.sb` but on 4 nodes, is in
+directory of the configuration file, and `$_` in any value is replaced by that
+directory. A complete example, equivalent to the former `workflow.sb` but on 4
+nodes, is in
 [`examples/l200/optmap-l200cfg01.yaml`](examples/l200/optmap-l200cfg01.yaml):
 
 ```yaml
@@ -152,8 +153,7 @@ Official maps use a LEGEND geometry generator, like
   applied when generating the `emission.spectrum`.
 - `env` (optional): environment variables for the generator, e.g.
   `LEGEND_METADATA` (legend-pygeom-l200) or `LEGEND1000_METADATA`
-  (legend-pygeom-l1000). `$_` is replaced by the directory of the configuration
-  file, other environment variables are expanded.
+  (legend-pygeom-l1000). Environment variables in the values are expanded.
 
 `optmapper` runs the generator once, before submitting the jobs.
 
