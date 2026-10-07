@@ -1,9 +1,19 @@
 # Welcome to optmapper's documentation!
 
-_optmapper_ is a tool to create optical maps with _reboost_ on large HPC
-systems.
+An optical map gives, for each position in a volume (e.g. the liquid argon), the
+probability that an optical photon emitted there is detected by each optical
+detector. Building one requires simulating billions of photons with
+[remage](https://github.com/legend-exp/remage) and histogramming the result with
+[reboost](https://github.com/legend-exp/reboost). _optmapper_ takes a single
+configuration file and runs the whole chain on one or many compute nodes.
 
 ## Next steps
+
+```{toctree}
+:maxdepth: 1
+
+User Manual <manual/index>
+```
 
 ```{toctree}
 :maxdepth: 1
