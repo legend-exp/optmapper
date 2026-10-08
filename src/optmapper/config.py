@@ -100,22 +100,28 @@ class GeometryConfig:
 class EmissionConfig:
     """Energy spectrum of the generated optical photons.
 
-    Either `spectrum`, the dotted path of a function with signature
+    One of `spectrum`, the dotted path of a function with signature
     ``f(filename: str, output_macro: bool)`` like
-    :func:`pygeomoptics.lar.g4gps_lar_emissions_spectrum`, or a `gaussian` with a
-    `mean` (energy or wavelength) and a `sigma` (energy).
+    :func:`pygeomoptics.lar.g4gps_lar_emissions_spectrum`, `g4gps_spectrum_macro`, a
+    macro file written by such a function with ``output_macro=True``, or a `gaussian`
+    with a `mean` (energy or wavelength) and a `sigma` (energy).
     """
 
     spectrum: str | None = None
+    g4gps_spectrum_macro: str | None = None
     gaussian: dict | None = None
 
     @classmethod
-    def from_dict(cls, d: Mapping) -> EmissionConfig:
-        _check_keys(d, {"spectrum", "gaussian"}, "emission")
+    def from_dict(cls, d: Mapping, base: Path) -> EmissionConfig:
+        _check_keys(d, {f.name for f in dataclasses.fields(cls)}, "emission")
         e = cls(**d)
-        if (e.spectrum is None) == (e.gaussian is None):
-            msg = "emission: specify exactly one of 'spectrum' or 'gaussian'"
+        n_given = sum(v is not None for v in (e.spectrum, e.g4gps_spectrum_macro, e.gaussian))
+        if n_given != 1:
+            msg = (
+                "emission: specify exactly one of 'spectrum', 'g4gps_spectrum_macro' or 'gaussian'"
+            )
             raise ConfigError(msg)
+        e.g4gps_spectrum_macro = _resolve_path(e.g4gps_spectrum_macro, base)
         if e.gaussian is not None:
             e.gaussian = dict(e.gaussian)
             _check_keys(e.gaussian, {"mean", "sigma"}, "emission.gaussian")
@@ -288,7 +294,7 @@ class Config:
                 name=str(d["name"]),
                 output_dir=str(_resolve_path(d["output_dir"], base)),
                 geometry=GeometryConfig.from_dict(d["geometry"], base),
-                emission=EmissionConfig.from_dict(d["emission"]),
+                emission=EmissionConfig.from_dict(d["emission"], base),
                 optmap=OptmapConfig.from_dict(d["optmap"]),
                 statistics=StatisticsConfig.from_dict(d.get("statistics", {})),
                 processing=ProcessingConfig.from_dict(d.get("processing", {})),

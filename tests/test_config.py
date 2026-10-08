@@ -20,7 +20,7 @@ geometry:
     LEGEND_METADATA: $_/legend-metadata
     LEGEND1000_METADATA: $HOME/legend1000-metadata
 emission:
-  spectrum: pygeomoptics.lar.g4gps_lar_emissions_spectrum
+  g4gps_spectrum_macro: lar-spectrum.mac
 optmap:
   range_in_m: [[-2, 2], [-2, 2], [-3, 3]]
   bins: [80, 80, 120]
@@ -32,6 +32,7 @@ statistics:
     assert cfg.output_dir == str(tmp_path / "prod" / "out")
     assert cfg.geometry.config == str(tmp_path / "prod" / "geom-config.yaml")
     assert cfg.geometry.optics_plugin == str(tmp_path / "prod" / "plugin.py")
+    assert cfg.emission.g4gps_spectrum_macro == str(tmp_path / "prod" / "lar-spectrum.mac")
     assert cfg.geometry.env["LEGEND_METADATA"] == str(tmp_path / "prod" / "legend-metadata")
     assert not cfg.geometry.env["LEGEND1000_METADATA"].startswith("$")
     assert cfg.gdml_file == tmp_path / "prod" / "out" / "geom.gdml"
@@ -96,6 +97,10 @@ def test_deep_merge():
         ({"geometry": {"gdml": "a.gdml", "env": {"A": "b"}}}, "require 'executable'"),
         ({"emission": {"gaussian": {"mean": 1}}}, "both"),
         ({"emission": {}}, "exactly one of"),
+        (
+            {"emission": {"spectrum": "a.b", "g4gps_spectrum_macro": "s.mac"}},
+            "exactly one of",
+        ),
         ({"statistics": {"nodes": 0}}, "positive integer"),
         ({"optmap": {"range_in_m": [[0, 1], [0, 1]], "bins": [1, 1]}}, "three entries"),
         ({"optmap": {"range_in_m": [[0, 1], [0, 2], [0, 1]], "bins": [1, 1, 1]}}, "equal x"),

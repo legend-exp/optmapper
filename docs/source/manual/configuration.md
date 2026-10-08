@@ -76,6 +76,9 @@ The energy spectrum of the optical photons, one of:
   like `pygeomoptics.lar.g4gps_lar_emissions_spectrum`,
   `pygeomoptics.pen.g4gps_pen_emissions_spectrum` or
   `pygeomoptics.fibers.g4gps_fiber_emissions_spectrum`
+- `g4gps_spectrum_macro`: a macro file written by such a function with
+  `output_macro=True`, e.g. with a modified spectrum. Its `/gps/` commands are
+  copied into the remage macro.
 - `gaussian`: `mean` and `sigma`, as energies (`9.68 eV`) or, for the mean, as a
   wavelength (`128 nm`). Plain numbers are in eV.
 

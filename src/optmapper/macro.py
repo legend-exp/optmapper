@@ -72,6 +72,23 @@ def load_spectrum_function(spec: str) -> Callable[[str, bool], None]:
     return func
 
 
+def read_spectrum_macro(path: str) -> list[str]:
+    """Read a spectrum macro written by a pygeom-optics ``g4gps_*`` function."""
+    try:
+        lines = Path(path).read_text().strip().splitlines()
+    except OSError as e:
+        msg = f"cannot read emission spectrum macro: {e}"
+        raise ConfigError(msg) from e
+    cmds = [ln.strip() for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
+    if not cmds or not all(c.startswith("/gps/") for c in cmds):
+        msg = (
+            f"emission spectrum macro '{path}' must only contain /gps/ commands, "
+            "was it written with output_macro=True?"
+        )
+        raise ConfigError(msg)
+    return lines
+
+
 @contextmanager
 def _optics_plugin(plugin: str | None) -> Iterator[None]:
     """Apply a pygeom-optics plugin, restoring the original material properties afterwards."""
@@ -106,6 +123,9 @@ def energy_commands(emission: EmissionConfig, optics_plugin: str | None = None) 
             f"/gps/ene/mono     {mean.m:.6g} eV",
             f"/gps/ene/sigma    {sigma.m:.6g} eV",
         ]
+
+    if emission.g4gps_spectrum_macro is not None:
+        return read_spectrum_macro(emission.g4gps_spectrum_macro)
 
     assert emission.spectrum is not None
     func = load_spectrum_function(emission.spectrum)

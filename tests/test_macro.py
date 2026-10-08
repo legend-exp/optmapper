@@ -102,6 +102,28 @@ def test_spectrum_with_optics_plugin(tmp_path, base_config):
     assert all(a > b for a, b in itertools.pairwise(points))
 
 
+def test_spectrum_macro_file(tmp_path, base_config):
+    from pygeomoptics.lar import g4gps_lar_emissions_spectrum  # noqa: PLC0415
+
+    spectrum = tmp_path / "lar-spectrum.mac"
+    g4gps_lar_emissions_spectrum(str(spectrum), True)
+    base_config["emission"] = {"g4gps_spectrum_macro": str(spectrum)}
+    cfg = Config.from_dict(base_config)
+    assert energy_commands(cfg.emission) == spectrum.read_text().strip().splitlines()
+    macro = render_macro(cfg, 1)
+    assert macro.index("/gps/particle") < macro.index("/gps/hist/point")
+    assert macro.index("/gps/hist/inter") < macro.index("/gps/ang/type")
+
+    # the plain-text output of g4gps_* is not a macro
+    g4gps_lar_emissions_spectrum(str(spectrum), False)
+    with pytest.raises(ConfigError, match="output_macro=True"):
+        energy_commands(cfg.emission)
+
+    base_config["emission"] = {"g4gps_spectrum_macro": str(tmp_path / "missing.mac")}
+    with pytest.raises(ConfigError, match="cannot read"):
+        energy_commands(Config.from_dict(base_config).emission)
+
+
 @pytest.mark.parametrize("spec", ["pygeomoptics.lar.nonexistent", "nomodule.func", "os.getcwd"])
 def test_bad_spectrum(base_config, spec):
     base_config["emission"] = {"spectrum": spec}
