@@ -249,15 +249,28 @@ class ExecutionConfig:
     def from_dict(cls, d: Mapping) -> ExecutionConfig:
         d = dict(d)
         site = load_site(d.pop("site", "local"))
-        merged = deep_merge(site, d)
+        # expand slurm.all separately, so that any user option overrides the site preset
+        merged = deep_merge(_expand_slurm_all(site), _expand_slurm_all(d))
         _check_keys(merged, {f.name for f in dataclasses.fields(cls)}, "execution")
         e = cls(**merged)
         if e.scheduler not in ("slurm", "local"):
             msg = f"execution.scheduler must be slurm or local, got {e.scheduler!r}"
             raise ConfigError(msg)
-        _check_keys(e.slurm, {"node", "merge"}, "execution.slurm")
         e.env = {k: str(v) for k, v in e.env.items()}
         return e
+
+
+def _expand_slurm_all(d: Mapping) -> dict:
+    """Move the ``slurm.all`` options of an execution config to ``slurm.node`` and ``slurm.merge``.
+
+    Job type specific options take precedence over the ones in ``slurm.all``.
+    """
+    d = dict(d)
+    slurm = d.get("slurm", {})
+    _check_keys(slurm, {"all", "node", "merge"}, "execution.slurm")
+    if "all" in slurm:
+        d["slurm"] = {k: {**slurm["all"], **slurm.get(k, {})} for k in ("node", "merge")}
+    return d
 
 
 @dataclass
