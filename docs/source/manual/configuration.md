@@ -33,7 +33,7 @@ optmap:
 execution:
   site: nersc
   slurm:
-    node:
+    all:
       mail-type: TIME_LIMIT,FAIL
       mail-user: someone@example.com
 ```
@@ -142,11 +142,15 @@ whole `volume`.
 | `env`         | environment variables set in the worker                            |
 | `slurm.node`  | `sbatch` options for the node jobs                                 |
 | `slurm.merge` | `sbatch` options for the merge job                                 |
+| `slurm.all`   | `sbatch` options for all jobs, e.g. email notifications            |
 
 Environment variables in `scratch_dir` (like `$PSCRATCH`) are expanded on the
 compute node. `sbatch` options are given without the leading `--`: `key: value`
 becomes `--key=value`, `key: true` becomes `--key`, and `key: null` removes an
-option set by the site preset.
+option set by the site preset. Options given in the user configuration,
+including `slurm.all`, always override the site preset. Within the user
+configuration (or the preset), `slurm.node` and `slurm.merge` take precedence
+over `slurm.all`.
 
 ## Illustration of statistics/processing options
 

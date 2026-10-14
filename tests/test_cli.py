@@ -21,7 +21,7 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
     base_config["statistics"]["nodes"] = 3
     base_config["execution"] = {
         "site": "nersc",
-        "slurm": {"node": {"mail-user": "me@example.com", "exclusive": True}},
+        "slurm": {"all": {"mail-user": "me@example.com"}, "node": {"exclusive": True}},
     }
     optmapper_cli([_write(tmp_path, base_config)])
 
@@ -49,6 +49,8 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
     merge = calls[3]
     assert "--dependency=afterany:1000:1001:1002" in merge
     assert "--qos=shared" in merge
+    assert "--mail-user=me@example.com" in merge
+    assert "--exclusive" not in merge
     assert shlex.split(merge[-1])[-3:] == ["merge", "--config", str(resolved)]
 
     # only the resolved config and the log directory, no job scripts

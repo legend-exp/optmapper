@@ -74,6 +74,36 @@ def test_site_presets(base_config):
         load_site("nonexistent-site")
 
 
+def test_slurm_all(tmp_path, base_config):
+    site = tmp_path / "mysite.yaml"
+    site.write_text(
+        "scheduler: slurm\n"
+        "slurm:\n"
+        "  all: {account: acc, mail-type: END}\n"
+        "  node: {time: '04:00:00', mail-type: FAIL}\n"
+        "  merge: {time: '01:00:00'}\n"
+    )
+    base_config["execution"] = {
+        "site": str(site),
+        "slurm": {"all": {"time": "02:00:00", "qos": "debug"}, "merge": {"qos": None}},
+    }
+    slurm = Config.from_dict(base_config).execution.slurm
+    assert set(slurm) == {"node", "merge"}
+    # user options, also from slurm.all, override the site preset
+    assert slurm["node"] == {
+        "account": "acc",
+        "mail-type": "FAIL",
+        "time": "02:00:00",
+        "qos": "debug",
+    }
+    assert slurm["merge"] == {"account": "acc", "mail-type": "END", "time": "02:00:00", "qos": None}
+
+    base_config["execution"] = {"site": "nersc", "slurm": {"all": {"time": "08:00:00"}}}
+    slurm = Config.from_dict(base_config).execution.slurm
+    assert slurm["node"]["time"] == slurm["merge"]["time"] == "08:00:00"
+    assert slurm["merge"]["qos"] == "shared"
+
+
 def test_site_preset_from_file(tmp_path, base_config):
     site = tmp_path / "mysite.yaml"
     site.write_text("scheduler: slurm\nslurm:\n  node:\n    partition: long\n")
@@ -111,6 +141,7 @@ def test_deep_merge():
         ({"optmap": {"range_in_m": [[1, 0]] * 3, "bins": [1] * 3}}, "empty range"),
         ({"execution": {"scheduler": "pbs"}}, "scheduler"),
         ({"execution": {"slurm": {"nodes": {}}}}, "unknown key"),
+        ({"execution": {"site": {"slurm": {"nodes": {}}}}}, "unknown key"),
         ({"name": "a/b"}, "invalid production name"),
     ],
 )
