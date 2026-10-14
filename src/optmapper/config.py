@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import dbetto
 
@@ -206,12 +206,20 @@ class ProcessingConfig:
     procs_per_map: int = 16
     merge_procs: int = 8
     bufsize: int = 50_000
-    keep_stp: bool = False
+    keep_stp: Literal["output", "scratch"] | None = None
 
     @classmethod
     def from_dict(cls, d: Mapping) -> ProcessingConfig:
         _check_keys(d, {f.name for f in dataclasses.fields(cls)}, "processing")
-        return cls(**d)
+        p = cls(**d)
+        if p.keep_stp is True:
+            p.keep_stp = "output"
+        elif p.keep_stp is False:
+            p.keep_stp = None
+        if p.keep_stp not in (None, "output", "scratch"):
+            msg = f"processing.keep_stp must be false, true, output or scratch, got {p.keep_stp!r}"
+            raise ConfigError(msg)
+        return p
 
 
 @dataclass
@@ -353,6 +361,20 @@ class Config:
     @property
     def final_map(self) -> Path:
         return Path(self.output_dir) / f"{self.name}.lh5"
+
+    @property
+    def scratch_dir(self) -> Path:
+        """Scratch area of this production, expands environment variables of the caller."""
+        base = self.execution.scratch_dir or str(Path(self.output_dir) / "scratch")
+        return Path(os.path.expandvars(base)) / self.name
+
+    def stp_dir(self, index: int) -> Path | None:
+        """Where the remage output files of a node are kept, ``None`` if they are deleted."""
+        if self.processing.keep_stp == "output":
+            return Path(self.output_dir) / "stp" / f"node{index:04d}"
+        if self.processing.keep_stp == "scratch":
+            return self.scratch_dir / "stp" / f"node{index:04d}"
+        return None
 
     def node_map(self, index: int) -> Path:
         """Output map of a single node, the final map if there is only one node."""

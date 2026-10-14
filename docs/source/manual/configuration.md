@@ -112,14 +112,20 @@ whole `volume`.
 
 ## `processing`
 
-| key                 | default | meaning                                           |
-| ------------------- | ------- | ------------------------------------------------- |
-| `stp_files_per_map` | 32      | remage output files per intermediate map          |
-| `parallel_maps`     | 8       | intermediate maps created at the same time        |
-| `procs_per_map`     | 16      | processes used to create each intermediate map    |
-| `merge_procs`       | 8       | processes used to merge maps                      |
-| `bufsize`           | 50 000  | rows read at a time from the remage output files  |
-| `keep_stp`          | false   | copy the remage output files to `output_dir/stp/` |
+| key                 | default | meaning                                          |
+| ------------------- | ------- | ------------------------------------------------ |
+| `stp_files_per_map` | 32      | remage output files per intermediate map         |
+| `parallel_maps`     | 8       | intermediate maps created at the same time       |
+| `procs_per_map`     | 16      | processes used to create each intermediate map   |
+| `merge_procs`       | 8       | processes used to merge maps                     |
+| `bufsize`           | 50 000  | rows read at a time from the remage output files |
+| `keep_stp`          | false   | keep the remage output files, see below          |
+
+By default, the remage output files are deleted once the intermediate maps are
+created. `keep_stp` keeps them instead:
+
+- `output` (or `true`): in `output_dir/stp/nodeN/`
+- `scratch`: in `<scratch_dir>/<name>/stp/nodeN/` (see `execution.scratch_dir`)
 
 ## `advanced`
 

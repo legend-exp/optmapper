@@ -100,9 +100,10 @@ def test_launcher(base_config, monkeypatch):
 
 @pytest.mark.usefixtures("fake_bin")
 @pytest.mark.parametrize("nodes", [1, 2])
-def test_local_production(tmp_path, base_config, nodes):
+@pytest.mark.parametrize("keep_stp", [True, "scratch"])
+def test_local_production(tmp_path, base_config, nodes, keep_stp):
     base_config["statistics"]["nodes"] = nodes
-    base_config["processing"]["keep_stp"] = True
+    base_config["processing"]["keep_stp"] = keep_stp
     optmapper_cli([_write(tmp_path, base_config)])
 
     out = tmp_path / "out"
@@ -116,10 +117,11 @@ def test_local_production(tmp_path, base_config, nodes):
     ]
     assert (out / "test-map.mac").is_file()
     # 2 runs x 3 processes per node
-    assert len(list((out / "stp").glob("node*/*.lh5"))) == 6 * nodes
-    assert not (out / "scratch" / "test-map").exists() or not any(
-        (out / "scratch" / "test-map").iterdir()
-    )
+    scratch = out / "scratch" / "test-map"
+    stp = out / "stp" if keep_stp is True else scratch / "stp"
+    assert len(list(stp.glob("node*/*.lh5"))) == 6 * nodes
+    # only the kept stp files are left in the scratch area
+    assert {p.name for p in scratch.iterdir()} <= {"stp"}
     if nodes > 1:
         assert len(list((out / "nodes").glob("*.lh5"))) == nodes
         assert len(list((out / "logs").glob("test-map-merge-*.log"))) == 1

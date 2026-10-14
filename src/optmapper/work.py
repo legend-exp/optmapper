@@ -91,10 +91,7 @@ def run_node(cfg: Config, index: int) -> None:
     from .macro import render_macro  # noqa: PLC0415
 
     job_id = os.environ.get("SLURM_JOB_ID", str(os.getpid()))
-    scratch_base = os.path.expandvars(
-        cfg.execution.scratch_dir or str(Path(cfg.output_dir) / "scratch")
-    )
-    scratch = Path(scratch_base) / cfg.name / f"node{index:04d}-{job_id}"
+    scratch = cfg.scratch_dir / f"node{index:04d}-{job_id}"
     # a requeued Slurm job keeps its ID, do not pick up files from the previous attempt
     shutil.rmtree(scratch, ignore_errors=True)
     scratch.mkdir(parents=True)
@@ -163,12 +160,13 @@ def run_node(cfg: Config, index: int) -> None:
             for f in futures:
                 f.result()
 
-        if proc.keep_stp:
-            dest = Path(cfg.output_dir) / "stp" / f"node{index:04d}"
-            with _step(f"run {run}: copying stp files to {dest}"):
+        dest = cfg.stp_dir(index)
+        if dest is not None:
+            # moving is cheap if the destination is on the scratch file system
+            with _step(f"run {run}: moving stp files to {dest}"):
                 dest.mkdir(parents=True, exist_ok=True)
                 for stp_file in stp_files:
-                    shutil.copy2(stp_file, dest)
+                    shutil.move(stp_file, dest / stp_file.name)
         shutil.rmtree(stp_dir)
 
     output = cfg.node_map(index)

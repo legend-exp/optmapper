@@ -16,13 +16,16 @@ The jobs run the worker with `pixi run --as-is` in the same pixi environment
 
 The output directory contains:
 
-| path                     | content                                              |
-| ------------------------ | ---------------------------------------------------- |
-| `<name>.lh5`             | the final optical map                                |
-| `<name>.mac`             | the remage macro (written by the first node job)     |
-| `optmapper-config.json`  | the resolved configuration, read by the workers      |
-| `geom.gdml`              | the geometry (if built by `optmapper`)               |
-| `geom-config.json`       | the geometry configuration passed to the generator   |
-| `logs/`                  | geometry and job logs                                |
-| `nodes/<name>-nodeN.lh5` | the node maps (only with more than one node)         |
-| `stp/nodeN/`             | the remage output files (only with `keep_stp: true`) |
+| path                     | content                                                |
+| ------------------------ | ------------------------------------------------------ |
+| `<name>.lh5`             | the final optical map                                  |
+| `<name>.mac`             | the remage macro (written by the first node job)       |
+| `optmapper-config.json`  | the resolved configuration, read by the workers        |
+| `geom.gdml`              | the geometry (if built by `optmapper`)                 |
+| `geom-config.json`       | the geometry configuration passed to the generator     |
+| `logs/`                  | geometry and job logs                                  |
+| `nodes/<name>-nodeN.lh5` | the node maps (only with more than one node)           |
+| `stp/nodeN/`             | the remage output files (only with `keep_stp: output`) |
+
+With `keep_stp: scratch`, the remage output files are kept in
+`<scratch_dir>/<name>/stp/nodeN/` instead.

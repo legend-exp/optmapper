@@ -139,6 +139,7 @@ def test_deep_merge():
             "shape",
         ),
         ({"optmap": {"range_in_m": [[1, 0]] * 3, "bins": [1] * 3}}, "empty range"),
+        ({"processing": {"keep_stp": "home"}}, "keep_stp"),
         ({"execution": {"scheduler": "pbs"}}, "scheduler"),
         ({"execution": {"slurm": {"nodes": {}}}}, "unknown key"),
         ({"execution": {"site": {"slurm": {"nodes": {}}}}}, "unknown key"),
