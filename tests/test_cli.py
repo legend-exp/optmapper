@@ -63,6 +63,37 @@ def test_slurm_submission(tmp_path, base_config, fake_bin, monkeypatch):
     optmapper_cli([_write(tmp_path, base_config), "--force"])
 
 
+def test_multi_node_jobs(tmp_path, base_config, fake_bin):
+    base_config["statistics"]["nodes"] = 5
+    base_config["statistics"]["nodes_per_job"] = 2
+    base_config["execution"] = {"site": "nersc"}
+    optmapper_cli([_write(tmp_path, base_config)])
+
+    calls = [json.loads(line) for line in fake_bin.read_text().splitlines()]
+    assert len(calls) == 4
+
+    out = tmp_path / "out"
+    for call, (first, count) in zip(calls[:3], [(0, 2), (2, 2), (4, 1)], strict=True):
+        assert "--account=m2676" in call
+        assert "--cpus-per-task=256" in call
+        assert f"--nodes={count}" in call
+        assert f"--ntasks={count}" in call
+        cmd = shlex.split(call[-1])
+        if count == 1:
+            assert f"--job-name=test-map-node{first:04d}" in call
+            assert cmd[-5] == "node"
+            assert cmd[-2:] == ["--index", str(first)]
+        else:
+            last = first + count - 1
+            assert f"--job-name=test-map-nodes{first:04d}-{last:04d}" in call
+            assert f"--output={out}/logs/test-map-nodes{first:04d}-{last:04d}-%j.log" in call
+            assert cmd[-7:] == [
+                *("nodes", "--config", str(out / "optmapper-config.json")),
+                *("--first-index", str(first), "--count", str(count)),
+            ]
+    assert "--dependency=afterany:1000:1001:1002" in calls[3]
+
+
 def test_single_node_has_no_merge_job(tmp_path, base_config, fake_bin):
     base_config["execution"] = {"site": "slurm"}
     optmapper_cli([_write(tmp_path, base_config)])
@@ -103,6 +134,8 @@ def test_launcher(base_config, monkeypatch):
 @pytest.mark.parametrize("keep_stp", [True, "scratch"])
 def test_local_production(tmp_path, base_config, nodes, keep_stp):
     base_config["statistics"]["nodes"] = nodes
+    # ignored by the local scheduler
+    base_config["statistics"]["nodes_per_job"] = 2
     base_config["processing"]["keep_stp"] = keep_stp
     optmapper_cli([_write(tmp_path, base_config)])
 

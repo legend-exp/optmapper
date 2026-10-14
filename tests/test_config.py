@@ -132,6 +132,7 @@ def test_deep_merge():
             "exactly one of",
         ),
         ({"statistics": {"nodes": 0}}, "positive integer"),
+        ({"statistics": {"nodes_per_job": 0}}, "positive integer"),
         ({"optmap": {"range_in_m": [[0, 1], [0, 1]], "bins": [1, 1]}}, "three entries"),
         ({"optmap": {"range_in_m": [[0, 1], [0, 2], [0, 1]], "bins": [1, 1, 1]}}, "equal x"),
         (
