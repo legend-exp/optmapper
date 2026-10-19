@@ -147,10 +147,9 @@ def run_node(cfg: Config, index: int) -> None:
     map_dir.mkdir()
     create_args = _reboost_create_args(cfg, scratch)
 
+    stp_dir = scratch / "stp"
+    stp_dir.mkdir()
     for run in range(cfg.statistics.runs_per_node):
-        stp_dir = scratch / "stp" / f"run{run:03d}"
-        stp_dir.mkdir(parents=True)
-
         cmd = [
             "remage",
             *cfg.advanced.remage_args,
@@ -168,34 +167,35 @@ def run_node(cfg: Config, index: int) -> None:
             log.debug("running: %s", shlex.join(cmd))
             subprocess.run(cmd, check=True)
 
-        stp_files = sorted(stp_dir.glob("*.lh5"), key=_natural_key)
-        if not stp_files:
-            msg = f"remage did not produce any output file in {stp_dir}"
-            raise RuntimeError(msg)
+    stp_files = sorted(stp_dir.glob("*.lh5"), key=_natural_key)
+    if not stp_files:
+        msg = f"remage did not produce any output file in {stp_dir}"
+        raise RuntimeError(msg)
 
-        chunks = [
-            stp_files[i : i + proc.stp_files_per_map]
-            for i in range(0, len(stp_files), proc.stp_files_per_map)
+    # split the stp files into parallel_maps contiguous chunks of about equal size
+    n_maps = min(proc.parallel_maps, len(stp_files))
+    chunks = [
+        stp_files[k * len(stp_files) // n_maps : (k + 1) * len(stp_files) // n_maps]
+        for k in range(n_maps)
+    ]
+    with (
+        _step(f"creating {len(chunks)} map(s) from {len(stp_files)} stp files"),
+        ThreadPoolExecutor(n_maps) as pool,
+    ):
+        futures = [
+            pool.submit(_create_map, create_args, chunk, map_dir / f"{k:04d}.lh5")
+            for k, chunk in enumerate(chunks)
         ]
-        with (
-            _step(f"run {run}: creating {len(chunks)} map(s) from {len(stp_files)} stp files"),
-            ThreadPoolExecutor(proc.parallel_maps) as pool,
-        ):
-            futures = [
-                pool.submit(_create_map, create_args, chunk, map_dir / f"run{run:03d}-{k:04d}.lh5")
-                for k, chunk in enumerate(chunks)
-            ]
-            for f in futures:
-                f.result()
+        for f in futures:
+            f.result()
 
-        dest = cfg.stp_dir(index)
-        if dest is not None:
-            # moving is cheap if the destination is on the scratch file system
-            with _step(f"run {run}: moving stp files to {dest}"):
-                dest.mkdir(parents=True, exist_ok=True)
-                for stp_file in stp_files:
-                    shutil.move(stp_file, dest / stp_file.name)
-        shutil.rmtree(stp_dir)
+    dest = cfg.stp_dir(index)
+    if dest is not None:
+        # moving is cheap if the destination is on the scratch file system
+        with _step(f"moving stp files to {dest}"):
+            dest.mkdir(parents=True, exist_ok=True)
+            for stp_file in stp_files:
+                shutil.move(stp_file, dest / stp_file.name)
 
     output = cfg.node_map(index)
     with _step(f"merging intermediate maps into {output}"):
