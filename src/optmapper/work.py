@@ -9,6 +9,7 @@ import re
 import resource
 import shlex
 import shutil
+import signal
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -76,12 +77,39 @@ def _reboost_create_args(cfg: Config, workdir: Path) -> list[str]:
     return args
 
 
+def _exit_status(returncode: int) -> str:
+    """Describe the exit code of a `subprocess`, which is negative if killed by a signal."""
+    if returncode >= 0:
+        return f"exit code {returncode}"
+    try:
+        name = signal.Signals(-returncode).name
+    except ValueError:
+        name = f"signal {-returncode}"
+    msg = f"killed by {name}"
+    if -returncode == signal.SIGKILL:
+        msg += " (out of memory?)"
+    return msg
+
+
 def _create_map(create_args: list[str], inputs: list[Path], output: Path) -> None:
-    """Create a map with ``reboost-optmap``, in a separate process as it spawns its own pool."""
+    """Create a map with ``reboost-optmap``, in a separate process as it spawns its own pool.
+
+    The output is forwarded line by line to the log as it is written, so that it is not lost
+    if a process is killed (e.g. out of memory) before the map creation finishes.
+    """
     cmd = ["reboost-optmap", *create_args, "--", *map(str, inputs), str(output)]
-    res = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if res.returncode != 0:
-        msg = f"map creation failed for {output.name}:\n{res.stdout}{res.stderr}"
+    # by default, Python block-buffers output to a pipe, which would be lost on SIGKILL
+    env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+    with subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env
+    ) as proc:
+        for line in proc.stdout:
+            log.info("%s: %s", output.stem, line.rstrip())
+    if proc.returncode != 0:
+        msg = (
+            f"map creation failed for {output.name}: {_exit_status(proc.returncode)}, "
+            "see its output above"
+        )
         raise RuntimeError(msg)
     log.info("created %s from %d stp files", output.name, len(inputs))
 
