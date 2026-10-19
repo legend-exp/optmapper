@@ -103,7 +103,7 @@ def _create_map(create_args: list[str], inputs: list[Path], output: Path) -> Non
     with subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env
     ) as proc:
-        for line in proc.stdout:  # typing: ignore[union-attr]
+        for line in proc.stdout:  # type: ignore[union-attr]
             log.info("%s: %s", output.stem, line.rstrip())
     if proc.returncode != 0:
         msg = (
