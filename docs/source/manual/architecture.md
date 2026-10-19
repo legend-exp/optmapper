@@ -12,9 +12,10 @@ Each node job:
 
 1. composes the remage macro from a template and the configuration
 2. runs remage with one process per CPU, `runs_per_node` times
-3. after each remage run, creates intermediate maps from chunks of
-   `stp_files_per_map` remage output files, `parallel_maps` at a time, then
-   deletes the remage output files from the scratch area
+3. splits the remage output files of all runs into `parallel_maps` chunks and
+   creates one intermediate map from each chunk, all at the same time, then
+   deletes the remage output files from the scratch area (unless `keep_stp` is
+   set)
 4. merges all its intermediate maps into one node map
 
 With more than one node, `optmapper` also submits a merge job, which depends on

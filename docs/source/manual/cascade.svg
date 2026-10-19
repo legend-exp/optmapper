@@ -40,9 +40,10 @@
   <text x="694" y="96"><tspan class="muted">× </tspan><tspan class="k stat">nodes</tspan></text>
 
   <!-- remage runs: statistics.runs_per_node -->
-  <rect class="loop" x="36" y="110" width="550" height="340" rx="8"/>
+  <rect class="loop" x="36" y="110" width="186" height="290" rx="8"/>
   <text x="50" y="134" class="b">remage run</text>
-  <text x="326" y="134"><tspan class="muted">× </tspan><tspan class="k stat">runs_per_node</tspan><tspan class="muted">, one after the other</tspan></text>
+  <text x="50" y="156"><tspan class="muted">× </tspan><tspan class="k stat">runs_per_node</tspan></text>
+  <text x="50" y="174" class="muted">one after the other</text>
 
   <!-- remage -->
   <rect class="box" x="48" y="205" width="162" height="140" rx="6"/>
@@ -65,15 +66,14 @@
     <rect class="file" x="234" y="372" width="34" height="22" rx="2"/>
   </g>
   <text x="251" y="418" text-anchor="middle">stp files</text>
-  <text x="251" y="434" text-anchor="middle" class="muted">one per process</text>
+  <text x="251" y="434" text-anchor="middle" class="muted">one per process and run</text>
 
-  <!-- chunks: processing.stp_files_per_map -->
+  <!-- chunks: one per intermediate map, processing.parallel_maps of them -->
   <path class="bracket" d="M276 162 h8 v112 h-8"/>
   <path class="bracket" d="M276 282 h8 v112 h-8"/>
-  <text x="343" y="206" text-anchor="middle" class="muted">chunks of</text>
-  <text x="343" y="326" text-anchor="middle" class="muted">chunks of</text>
-  <text x="343" y="240" text-anchor="middle" class="k proc" font-size="11">stp_files_per_map</text>
-  <text x="343" y="360" text-anchor="middle" class="k proc" font-size="11">stp_files_per_map</text>
+  <text x="343" y="206" text-anchor="middle" class="muted">chunk 1</text>
+  <text x="343" y="326" text-anchor="middle" class="muted">chunk</text>
+    <text x="343" y="360" text-anchor="middle" class="k proc">parallel_maps</text>
   <path class="arrow" marker-end="url(#head)" d="M290 218 H398"/>
   <path class="arrow" marker-end="url(#head)" d="M290 338 H398"/>
 
@@ -89,7 +89,7 @@
   <text x="487" y="353" text-anchor="middle" class="muted">processes</text>
   <text x="487" y="376" text-anchor="middle">→ intermediate map</text>
   <text x="487" y="418" text-anchor="middle" class="k proc">parallel_maps</text>
-  <text x="487" y="434" text-anchor="middle" class="muted">created at a time</text>
+  <text x="487" y="434" text-anchor="middle" class="muted">maps, created at once</text>
 
   <!-- node map -->
   <path class="arrow" marker-end="url(#head)" d="M572 218 C592 218 592 262 606 266"/>
@@ -114,7 +114,7 @@
   <!-- relations -->
   <text x="20" y="652" class="b">How the knobs combine</text>
   <text x="20" y="678"><tspan class="muted">photons </tspan>= <tspan class="k stat">nodes</tspan> × <tspan class="k stat">runs_per_node</tspan> × <tspan class="k stat">processes_per_node</tspan> × <tspan class="k stat">primaries_per_process</tspan></text>
-  <text x="20" y="702"><tspan class="muted">intermediate maps per run </tspan>= ⌈ <tspan class="k stat">processes_per_node</tspan> / <tspan class="k proc">stp_files_per_map</tspan> ⌉<tspan class="muted">, all merged into the node map</tspan></text>
+  <text x="20" y="702"><tspan class="muted">stp files per intermediate map </tspan>≈ <tspan class="k stat">runs_per_node</tspan> × <tspan class="k stat">processes_per_node</tspan> / <tspan class="k proc">parallel_maps</tspan></text>
   <text x="20" y="726"><tspan class="muted">processes while creating maps </tspan>= <tspan class="k proc">parallel_maps</tspan> × <tspan class="k proc">procs_per_map</tspan><tspan class="muted">, keep it close to the CPUs of a node</tspan></text>
   <text x="20" y="756"><tspan class="k stat">blue</tspan><tspan class="muted">: </tspan><tspan class="k">statistics.*</tspan><tspan class="muted">, sets the simulated statistics</tspan></text>
   <text x="20" y="778"><tspan class="k proc">orange</tspan><tspan class="muted">: </tspan><tspan class="k">processing.*</tspan><tspan class="muted">, sets resources and memory use, not the result</tspan></text>

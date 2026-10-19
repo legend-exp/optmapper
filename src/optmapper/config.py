@@ -201,7 +201,6 @@ class OptmapConfig:
 
 @dataclass
 class ProcessingConfig:
-    stp_files_per_map: int = 32
     parallel_maps: int = 8
     procs_per_map: int = 16
     merge_procs: int = 8

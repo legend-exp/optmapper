@@ -107,6 +107,6 @@ def base_config(tmp_path, gdml_file):
         "emission": {"gaussian": {"mean": "128 nm", "sigma": "0.22 eV"}},
         "optmap": {"range_in_m": [[-1, 1], [-1, 1], [-1, 1]], "bins": [4, 4, 4]},
         "statistics": {"nodes": 1, "runs_per_node": 2, "processes_per_node": 3},
-        "processing": {"stp_files_per_map": 2, "parallel_maps": 2, "procs_per_map": 1},
+        "processing": {"parallel_maps": 2, "procs_per_map": 1},
         "execution": {"site": "local"},
     }
