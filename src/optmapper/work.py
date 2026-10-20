@@ -66,7 +66,8 @@ def _reboost_create_args(cfg: Config, workdir: Path) -> list[str]:
     settings = workdir / "optmap-settings.json"
     dbetto.utils.write_dict(cfg.optmap.reboost_settings(), str(settings))
     args = [
-        *("--bufsize", str(cfg.processing.bufsize), "create"),
+        # log the progress, to see how far it got if it is killed
+        *("--verbose", "--bufsize", str(cfg.processing.bufsize), "create"),
         *("--settings", str(settings), "--geom", str(cfg.gdml_file)),
         *("--n-procs", str(cfg.processing.procs_per_map)),
     ]
