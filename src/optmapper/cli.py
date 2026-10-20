@@ -9,6 +9,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from . import _version
 from .config import Config, ConfigError
 from .log_utils import setup_log
 from .schedulers import Job, LocalScheduler, get_scheduler
@@ -78,6 +79,12 @@ def optmapper_cli(argv: list[str] | None = None) -> None:
         prog="optmapper",
         description="%(prog)s: produce LEGEND optical maps. Prepares the geometry, "
         "submits the production jobs according to the configuration and exits.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        help="""Print %(prog)s version and exit""",
+        version=_version.__version__,
     )
     parser.add_argument("config", help="production configuration file (YAML or JSON)")
     parser.add_argument("--verbose", "-v", action="count", default=0, help="increase verbosity")
