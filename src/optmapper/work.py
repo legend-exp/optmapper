@@ -44,7 +44,12 @@ def _available_cpus() -> int:
 
 def merge_maps(cfg: Config, inputs: list[Path], output: Path, workdir: Path) -> None:
     """Merge optical maps into `output`, temporary files are written to `workdir`."""
+    from reboost.log_utils import setup_log as reboost_setup_log  # noqa: PLC0415
     from reboost.optmap.create import merge_optical_maps  # noqa: PLC0415
+
+    # the merge runs in this process, so log like ``reboost-optmap --verbose`` would
+    if not logging.getLogger("reboost").handlers:
+        reboost_setup_log(logging.INFO)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     tmp = workdir / f".{output.name}.part"
