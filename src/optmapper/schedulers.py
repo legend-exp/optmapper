@@ -25,6 +25,20 @@ class Job:
     """IDs of jobs that must have terminated (successfully or not) before this one starts."""
 
 
+def slurm_options(options: Mapping) -> list[str]:
+    """Format Slurm command line options.
+
+    ``True`` values become flags, ``None`` and ``False`` values are skipped.
+    """
+    out = []
+    for k, v in options.items():
+        if v is True:
+            out.append(f"--{k}")
+        elif v is not None and v is not False:
+            out.append(f"--{k}={v}")
+    return out
+
+
 class Scheduler(ABC):
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
@@ -45,12 +59,8 @@ class SlurmScheduler(Scheduler):
             f"--job-name={job.name}",
             f"--output={job.log_file}",
             f"--error={job.log_file}",
+            *slurm_options(job.options),
         ]
-        for k, v in job.options.items():
-            if v is True:
-                cmd.append(f"--{k}")
-            elif v is not None and v is not False:
-                cmd.append(f"--{k}={v}")
         if job.dependencies:
             cmd.append(f"--dependency=afterany:{':'.join(job.dependencies)}")
         cmd += ["--wrap", shlex.join(job.command)]

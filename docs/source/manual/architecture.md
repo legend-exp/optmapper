@@ -18,6 +18,10 @@ Each node job:
    set)
 4. merges all its intermediate maps into one node map
 
+With `nodes_per_job` larger than 1, several nodes share one Slurm job: the job
+runs `optmapper-work nodes`, which starts one `srun` step per node of the
+allocation, waits for all of them and fails if any node failed.
+
 With more than one node, `optmapper` also submits a merge job, which depends on
 all node jobs (`--dependency=afterany:...`) and merges the node maps into the
 final map. If some node jobs fail, the merge job merges the node maps that exist

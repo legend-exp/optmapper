@@ -134,6 +134,8 @@ class EmissionConfig:
 @dataclass
 class StatisticsConfig:
     nodes: int = 1
+    nodes_per_job: int = 1
+    """Nodes of a single Slurm job, its nodes run one ``srun`` step each."""
     runs_per_node: int = 1
     primaries_per_process: int = 1_000_000
     processes_per_node: int | None = None
@@ -250,7 +252,8 @@ class ExecutionConfig:
     """Command prefix to run the worker in the software environment (e.g. ``pixi run``)."""
     env: dict[str, str] = field(default_factory=dict)
     slurm: dict = field(default_factory=dict)
-    """``sbatch`` options for the ``node`` and ``merge`` jobs."""
+    """``sbatch`` options for the ``node`` and ``merge`` jobs, ``srun`` options for the node
+    steps of multi-node jobs."""
 
     @classmethod
     def from_dict(cls, d: Mapping) -> ExecutionConfig:
@@ -274,9 +277,13 @@ def _expand_slurm_all(d: Mapping) -> dict:
     """
     d = dict(d)
     slurm = d.get("slurm", {})
-    _check_keys(slurm, {"all", "node", "merge"}, "execution.slurm")
+    _check_keys(slurm, {"all", "node", "merge", "srun"}, "execution.slurm")
     if "all" in slurm:
-        d["slurm"] = {k: {**slurm["all"], **slurm.get(k, {})} for k in ("node", "merge")}
+        d["slurm"] = {
+            **slurm,
+            **{k: {**slurm["all"], **slurm.get(k, {})} for k in ("node", "merge")},
+        }
+        del d["slurm"]["all"]
     return d
 
 

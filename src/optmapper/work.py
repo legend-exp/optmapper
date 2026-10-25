@@ -11,6 +11,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -20,6 +21,7 @@ import dbetto
 
 from .config import Config
 from .log_utils import setup_log
+from .schedulers import slurm_options
 
 log = logging.getLogger(__name__)
 
@@ -215,6 +217,63 @@ def run_node(cfg: Config, index: int) -> None:
     )
 
 
+def node_log_file(cfg: Config, index: int) -> Path:
+    """Log file of a node, ``%j`` is replaced by the job ID."""
+    return cfg.log_dir / f"{cfg.name}-node{index:04d}-%j.log"
+
+
+def srun_command(cfg: Config, index: int, config_file: str) -> list[str]:
+    """``srun`` command running node `index` as a job step on one node of the allocation."""
+    options = {
+        "nodes": 1,
+        "ntasks": 1,
+        # srun does not inherit --cpus-per-task from sbatch, give the step the whole node
+        "cpus-per-task": os.environ["SLURM_CPUS_ON_NODE"],
+        "job-name": f"{cfg.name}-node{index:04d}",
+        "output": node_log_file(cfg, index),
+        "error": node_log_file(cfg, index),
+        **cfg.execution.slurm.get("srun", {}),
+    }
+    return [
+        "srun",
+        *slurm_options(options),
+        # the environment is inherited by the step, no need for the launcher
+        *(sys.executable, "-m", "optmapper.work", "--verbose", "node"),
+        *("--config", config_file, "--index", str(index)),
+    ]
+
+
+def run_nodes(cfg: Config, first: int, count: int, config_file: str) -> None:
+    """Run nodes `first` to `first + count - 1` in parallel, one ``srun`` step per node.
+
+    All steps are waited for, failed nodes do not stop the other ones.
+    """
+    n_alloc = os.environ.get("SLURM_JOB_NUM_NODES")
+    if n_alloc is None:
+        msg = "running several nodes requires a Slurm allocation (with srun)"
+        raise RuntimeError(msg)
+    if int(n_alloc) != count:
+        log.warning("allocation has %s nodes, running %d node steps", n_alloc, count)
+
+    steps = {}
+    for index in range(first, first + count):
+        cmd = srun_command(cfg, index, config_file)
+        log.debug("running: %s", shlex.join(cmd))
+        steps[index] = subprocess.Popen(cmd)
+    log.info("started %d node steps, logs in %s", count, cfg.log_dir)
+
+    failed = []
+    for index, step in steps.items():
+        if step.wait() != 0:
+            log.error("node %d failed with exit code %d", index, step.returncode)
+            failed.append(index)
+        else:
+            log.info("node %d done", index)
+    if failed:
+        msg = f"{len(failed)} of {count} nodes failed: {', '.join(map(str, failed))}"
+        raise RuntimeError(msg)
+
+
 def run_merge(cfg: Config) -> None:
     """Merge the node maps into the final map, tolerating failed nodes."""
     nodes = [cfg.node_map(i) for i in range(cfg.statistics.nodes)]
@@ -253,6 +312,13 @@ def work_cli(argv: list[str] | None = None) -> None:
     _add_config(node_parser)
     node_parser.add_argument("--index", type=int, required=True, help="node index")
 
+    nodes_parser = subparsers.add_parser(
+        "nodes", help="run several nodes in parallel in a multi-node Slurm allocation"
+    )
+    _add_config(nodes_parser)
+    nodes_parser.add_argument("--first-index", type=int, required=True, help="first node index")
+    nodes_parser.add_argument("--count", type=int, required=True, help="number of nodes")
+
     merge_parser = subparsers.add_parser("merge", help="merge the node maps into the final map")
     _add_config(merge_parser)
 
@@ -264,6 +330,12 @@ def work_cli(argv: list[str] | None = None) -> None:
 
     if args.command == "node":
         run_node(cfg, args.index)
+    elif args.command == "nodes":
+        try:
+            run_nodes(cfg, args.first_index, args.count, args.config)
+        except RuntimeError as e:
+            log.error("%s", e)
+            sys.exit(1)
     elif args.command == "merge":
         run_merge(cfg)
 

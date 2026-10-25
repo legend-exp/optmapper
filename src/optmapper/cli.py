@@ -13,6 +13,7 @@ from . import _version
 from .config import Config, ConfigError
 from .log_utils import setup_log
 from .schedulers import Job, LocalScheduler, get_scheduler
+from .work import node_log_file
 
 log = logging.getLogger(__name__)
 
@@ -45,19 +46,37 @@ def submit(cfg: Config, dry_run: bool = False) -> list[str]:
     ]
     config = ["--config", str(cfg.resolved_config_file)]
 
+    node_options = cfg.execution.slurm.get("node", {})
+    n_nodes = cfg.statistics.nodes
+    # the local scheduler has no allocation to run several nodes in
+    per_job = cfg.statistics.nodes_per_job if cfg.execution.scheduler == "slurm" else 1
+
     node_ids = []
-    for i in range(cfg.statistics.nodes):
-        job = Job(
-            name=f"{cfg.name}-node{i:04d}",
-            command=[*work, "node", *config, "--index", str(i)],
-            log_file=cfg.log_dir / f"{cfg.name}-node{i:04d}-%j.log",
-            options=cfg.execution.slurm.get("node", {}),
-        )
+    for first in range(0, n_nodes, per_job):
+        count = min(per_job, n_nodes - first)
+        if count == 1:
+            job = Job(
+                name=f"{cfg.name}-node{first:04d}",
+                command=[*work, "node", *config, "--index", str(first)],
+                log_file=node_log_file(cfg, first),
+                options=node_options,
+            )
+        else:
+            last = first + count - 1
+            job = Job(
+                name=f"{cfg.name}-nodes{first:04d}-{last:04d}",
+                command=[
+                    *(*work, "nodes", *config),
+                    *("--first-index", str(first), "--count", str(count)),
+                ],
+                log_file=cfg.log_dir / f"{cfg.name}-nodes{first:04d}-{last:04d}-%j.log",
+                options={**node_options, "nodes": count, "ntasks": count},
+            )
         node_ids.append(scheduler.submit(job))
         log.info("submitted job %s (%s)", node_ids[-1], job.name)
 
     ids = list(node_ids)
-    if cfg.statistics.nodes > 1:
+    if n_nodes > 1:
         job = Job(
             name=f"{cfg.name}-merge",
             command=[*work, "merge", *config],
@@ -145,6 +164,8 @@ def _prepare(cfg: Config, dry_run: bool, force: bool) -> None:
         s.processes_per_node or "all CPU",
         s.primaries_per_process,
     )
+    if s.nodes_per_job > 1 and cfg.execution.scheduler == "slurm":
+        log.info("up to %d nodes per job", s.nodes_per_job)
 
     if dry_run:
         return

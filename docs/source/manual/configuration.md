@@ -84,14 +84,25 @@ The energy spectrum of the optical photons, one of:
 
 ## `statistics`
 
-| key                     | default   | meaning                                       |
-| ----------------------- | --------- | --------------------------------------------- |
-| `nodes`                 | 1         | number of node jobs                           |
-| `runs_per_node`         | 1         | remage runs per node job, one after the other |
-| `primaries_per_process` | 1 000 000 | photons simulated by each remage process      |
-| `processes_per_node`    | all CPUs  | remage processes per run (`remage --procs`)   |
+| key                     | default   | meaning                                     |
+| ----------------------- | --------- | ------------------------------------------- |
+| `nodes`                 | 1         | number of nodes                             |
+| `nodes_per_job`         | 1         | nodes in a single Slurm job, see below      |
+| `runs_per_node`         | 1         | remage runs per node, one after the other   |
+| `primaries_per_process` | 1 000 000 | photons simulated by each remage process    |
+| `processes_per_node`    | all CPUs  | remage processes per run (`remage --procs`) |
 
-The total number of photons is the product of the four values.
+The total number of photons is the product of `nodes`, `runs_per_node`,
+`primaries_per_process` and `processes_per_node`.
+
+By default every node is a separate Slurm job. With `nodes_per_job` larger than
+1, the nodes are grouped into multi-node jobs (the last one may be smaller),
+which reduces the number of jobs in the queue. Each node of such a job runs as
+its own `srun` step with its own log file, and a failed node does not stop the
+others. On the other hand, a multi-node job only starts once all its nodes are
+free, the whole allocation is charged until its slowest node is done, and a node
+crash or a time limit hit loses all nodes of the job. The local scheduler
+ignores this option.
 
 ## `optmap`
 
@@ -148,14 +159,20 @@ created. `keep_stp` keeps them instead:
 | `slurm.node`  | `sbatch` options for the node jobs                                 |
 | `slurm.merge` | `sbatch` options for the merge job                                 |
 | `slurm.all`   | `sbatch` options for all jobs, e.g. email notifications            |
+| `slurm.srun`  | extra `srun` options for the node steps of multi-node jobs         |
 
 Environment variables in `scratch_dir` (like `$PSCRATCH`) are expanded on the
-compute node. `sbatch` options are given without the leading `--`: `key: value`
-becomes `--key=value`, `key: true` becomes `--key`, and `key: null` removes an
-option set by the site preset. Options given in the user configuration,
-including `slurm.all`, always override the site preset. Within the user
-configuration (or the preset), `slurm.node` and `slurm.merge` take precedence
-over `slurm.all`.
+compute node. `sbatch` (and `srun`) options are given without the leading `--`:
+`key: value` becomes `--key=value`, `key: true` becomes `--key`, and `key: null`
+removes an option set by the site preset. Options given in the user
+configuration, including `slurm.all`, always override the site preset. Within
+the user configuration (or the preset), `slurm.node` and `slurm.merge` take
+precedence over `slurm.all`.
+
+For multi-node jobs, `nodes` and `ntasks` of `slurm.node` are set to the number
+of nodes of the job. The node steps get one node and all its CPUs
+(`--nodes=1 --ntasks=1 --cpus-per-task=$SLURM_CPUS_ON_NODE`), `slurm.srun` is
+added to these options.
 
 ## Illustration of statistics/processing options
 
